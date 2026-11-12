@@ -43,6 +43,7 @@
 |---|---|---|
 | `analysis/build_dwd_game.py` | `ods_game_kaggle` → `dwd_game` + `dwd_game_genre`（全量重建） | `python -m analysis.build_dwd_game` |
 | `analysis/build_dwd_review.py` | `ods_review_kaggle` → `dwd_review`（按分片，`INSERT … SELECT`） | `python -m analysis.build_dwd_review --shards 0-12` |
+| `analysis/build_ads_game.py` | `dwd_game` + `dwd_game_genre` → 只依赖游戏表的 `ads` 表：`ads_yearly_release`、`ads_genre_heat`、`ads_rating_dist`、`ads_top_sellers`（拥有者口径），并更新 `ads_kpi_overview` 的游戏侧两列和 `ads_meta`。全量重建，单事务，提交前自动核对总数。依赖评论表、在线快照、模型的 `ads` 表不在此脚本内 | `python -m analysis.build_ads_game` |
 
 **实测（2026-11-12）**：游戏清洗 12.6 秒，得到 125,854 款游戏、338,583 条游戏 × 类型、33 种类型；评论第 0 片清洗 141 秒，1000 万行无丢弃。
 
