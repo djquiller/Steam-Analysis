@@ -18,7 +18,9 @@ backend/tests/      pytest
 ## 约定
 
 - 只用 `api_reader` 账号连库，只读 `dwd_*` / `ads_*`。重计算缺失时找数据组补 `ads` 表，接口里只做过滤、`SUM … GROUP BY` 再汇总、排序、分页。
-- 全局筛选参数解析集中在一处（如 `services/filters.py`），价格区间在这里换算为 `price_bucket` 集合，所有可筛选接口复用。
+- 全局筛选参数解析集中在一处（如 `services/filters.py`），所有可筛选接口复用。这里统一处理两件事：
+  - 没传 `genre` 时，聚合表加条件 `genre = '__ALL__'`；游戏粒度表在传了 `genre` 时才关联 `dwd_game_genre`（规则见 `docs/schema.md`"筛选维度约定"）；
+  - `price_bucket` 按逗号拆开，校验取值后生成 `IN (...)` 条件。
 - SQL 一律参数化；`genre` 等字符串参数校验在 `/meta/filters` 的取值内，非法返回 `40001`。
 - 空结果返回 `code: 0` 与空数组；数据库异常捕获后返回 `50001` 并记录日志。
 - 开启 CORS，允许前端开发地址。
