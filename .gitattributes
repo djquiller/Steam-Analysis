@@ -1,0 +1,25 @@
+# 仓库内文本一律以 UTF-8 + LF 存储，与各人本机的 core.autocrlf 设置无关
+* text=auto eol=lf
+
+# Windows 脚本检出为 CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# SQL 样本与迁移脚本按文本处理，便于 diff 和 Review
+*.sql  text eol=lf
+
+# 二进制文件不做换行转换
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.pptx  binary
+*.docx  binary
+*.xlsx  binary
+*.pdf   binary
+*.pkl   binary
+*.joblib binary

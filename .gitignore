@@ -1,0 +1,27 @@
+# 密钥与个人配置
+.env
+CLAUDE.local.md
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/dist/
+
+# 数据（全量数据与快照不入库，仅 storage/sample/ 下的样本入库）
+data/
+*.csv
+*.parquet
+*.sql.gz
+!storage/sample/**
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
