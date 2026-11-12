@@ -10,7 +10,7 @@
 | Steam Store `appdetails` | 游戏详情、价格、类型 | 约 200 次 / 5 分钟；价格统一请求 `cc=us` |
 | SteamSpy | 拥有者区间、标签、平均时长 | 约 1 次 / 秒；`all` 接口约 1 次 / 分钟 |
 | Steam `appreviews` | 增量评论 | `cursor` 翻页，`num_per_page` 最大 100；`cursor` 需 URL 编码，同一 cursor 重复出现即到底 |
-| `ISteamUserStats/GetNumberOfCurrentPlayers` | 在线人数快照 | 需 Steam Web API Key；APScheduler 每小时采 Top 游戏一次，写 `ods_ccu_snapshot` |
+| `ISteamUserStats/GetNumberOfCurrentPlayers` | 在线人数快照 | 需 Steam Web API Key；APScheduler 每小时采 Top 游戏一次，写 `ods_ccu_snapshot`。实测（2026-11-12）：按 5 次/秒连续发 708 个请求，没有出现 429 或 5xx，0 次重试，一轮 143.5 秒；每个密钥每天上限 10 万次，每小时一轮约用 1.7 万次/天。查不到的 appid 接口返回 404（不重试，记为无数据） |
 
 （限流数字为经验值，首次采集时实测并更新本表。）
 
@@ -61,8 +61,11 @@
 | `crawler/kaggle_reviews.py` | 逐片下载评论分片并导入 `ods_review_kaggle` | `python -m crawler.kaggle_reviews --shards 0-12 --delete-after` |
 | `crawler/kaggle_review_text.py` | 评论原文按游戏分层抽样（每款最多 30 条），写入 `ods_review_text_sample` | `python -m crawler.kaggle_review_text --shard 0 --k 30` |
 | `scripts/load_data.py` | 一键流水线：游戏集 + 13 个评论分片，逐片下载 → `ods` → 抽样 → `dwd`，可断点续跑 | `python scripts/load_data.py` |
+| `crawler/ccu_watchlist.py` | 重建在线人数采集名单（`peak_ccu` 前 500 ∪ `owners_mid` 前 500），整表替换 `dwd_ccu_watchlist` | `python -m crawler.ccu_watchlist` |
+| `crawler/ccu_snapshot.py` | 手动采一轮在线人数：原始结果写 `ods_ccu_snapshot`，取到人数的写 `dwd_ccu_snapshot`；同一小时重跑不产生重复行；名单为空或超过 24 小时会先重建 | `python -m crawler.ccu_snapshot` |
+| `crawler/scheduler.py` | 定时采集常驻进程：每小时第 2 分钟（UTC）采一轮在线人数，每天 UTC 00:50 刷新名单；启动时当前小时没有快照就立即补采；`Ctrl+C` 退出。单独开一个终端长期运行，日志在 `data/logs/scheduler.log` | `python -m crawler.scheduler` |
 
-公共模块在 `crawler/common/`：`settings.py`（读 `.env`）、`db.py`（`etl_writer` 连接）、`runlog.py`（运行记录）。
+公共模块在 `crawler/common/`：`settings.py`（读 `.env`）、`db.py`（`etl_writer` 连接）、`runlog.py`（运行记录）、`http.py`（公共 HTTP 客户端：超时、指数退避重试、限速、User-Agent、日志脱敏；新的接口采集都用它）。测试：`python -m pytest`。
 
 **实测（2026-11-12 全量，本机 i7-14650HX / 32 GB / NVMe）**
 
@@ -81,5 +84,6 @@
 - [x] 各脚本入口与运行命令（见上节）
 - [x] Kaggle 游戏集与评论集全量导入 `ods`（2026-11-12 完成，数字见上节）
 - [x] 申请 Steam Web API Key 并填入 `.env`（2026-11-12 已校验可用）
-- [ ] 在线人数与价格的定时采集（APScheduler）
+- [x] 在线人数的定时采集（APScheduler；2026-11-12 首轮 708 款入库）
+- [ ] 价格快照的定时采集
 - [ ] 实测 Steam / SteamSpy 接口限流与总采集耗时
