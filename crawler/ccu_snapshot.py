@@ -177,7 +177,8 @@ def collect_once(stop: threading.Event | None = None) -> dict:
                 for done, r in enumerate(pool.map(work, appids), start=1):
                     if r is not None:
                         results.append(r)
-                    if done % 100 == 0 or done == len(appids):
+                    # 中断或放弃后，剩下的款只是被跳过，不再刷进度
+                    if r is not None and (done % 100 == 0 or done == len(appids)):
                         ok_so_far = sum(x.player_count is not None for x in results)
                         log.info("进度 %d/%d：成功 %d，失败 %d", done, len(appids),
                                  ok_so_far, len(results) - ok_so_far)
