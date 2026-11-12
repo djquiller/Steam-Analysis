@@ -4,8 +4,8 @@
 
 | 来源 | 链接 | 许可 / 使用条款 | 获取方式 | 获取日期 | 原始行数 | 落库表 |
 |---|---|---|---|---|---|---|
-| Steam Games Dataset（FronkonGames），`games.csv` | https://www.kaggle.com/datasets/fronkongames/steam-games-dataset | MIT（HF 镜像标注；下载时核对 Kaggle 页） | Kaggle CLI 下载（2026-11-08 版本，约 401 MB） | 2026-11-12 | 待导入后统计（README 称 148,909 款） | `ods_game_kaggle` |
-| Steam Reviews, Games and Tags（sergiodelcarpio），`reviews-*.parquet` | https://www.kaggle.com/datasets/sergiodelcarpio/steam-reviews （采集代码：https://github.com/sadelcarpio/steam-recsys-e2e） | other：评论原文归作者，游戏信息归 Valve 与发行商；数据由 Steam 公开 Web API 采集，限研究与教育用途 | Kaggle CLI 逐分片下载（2026-10-30 快照，约 12 个分片、共约 23 GB） | 2026-11-12 起 | 121,312,346 条评论（说明文件） | `ods_review_kaggle` |
+| Steam Games Dataset（FronkonGames），`games.csv` | https://www.kaggle.com/datasets/fronkongames/steam-games-dataset | MIT（HF 镜像标注；下载时核对 Kaggle 页） | Kaggle CLI 下载（2026-11-08 版本，约 401 MB） | 2026-11-12 | 125,855 款（README 称 148,909，以实际文件为准） | `ods_game_kaggle` |
+| Steam Reviews, Games and Tags（sergiodelcarpio），`reviews-*.parquet` | https://www.kaggle.com/datasets/sergiodelcarpio/steam-reviews （采集代码：https://github.com/sadelcarpio/steam-recsys-e2e） | other：评论原文归作者，游戏信息归 Valve 与发行商；数据由 Steam 公开 Web API 采集，限研究与教育用途 | Kaggle CLI 逐分片下载（2026-10-30 快照，共 13 个分片 reviews-000～012，每片 1000 万条，共约 23.5 GB） | 2026-11-12 起 | 121,312,346 条评论（说明文件） | `ods_review_kaggle` |
 | Steam Store `appdetails` | https://store.steampowered.com/api/appdetails | Steam 订户协议 / API 使用条款 | API 增量 | | | `ods_app_detail` |
 | SteamSpy | https://steamspy.com/api.php | SteamSpy 公开 API | API 增量 | | | `ods_steamspy` |
 | Steam `appreviews` | https://store.steampowered.com/appreviews/{appid} | Steam API 使用条款 | API 增量 | | | `ods_review_api` |
