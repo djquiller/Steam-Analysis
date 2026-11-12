@@ -64,7 +64,7 @@
 | `crawler/ccu_watchlist.py` | 重建在线人数采集名单（`peak_ccu` 前 500 ∪ `owners_mid` 前 500），整表替换 `dwd_ccu_watchlist` | `python -m crawler.ccu_watchlist` |
 | `crawler/ccu_snapshot.py` | 手动采一轮在线人数：原始结果写 `ods_ccu_snapshot`，取到人数的写 `dwd_ccu_snapshot`；同一小时重跑不产生重复行；名单为空或超过 24 小时会先重建 | `python -m crawler.ccu_snapshot` |
 | `crawler/scheduler.py` | 定时采集常驻进程：每小时第 2 分钟（UTC）采一轮在线人数，每天 UTC 00:50 刷新名单；启动时当前小时没有快照就立即补采；`Ctrl+C` 退出。单独开一个终端长期运行，日志在 `data/logs/scheduler.log` | `python -m crawler.scheduler` |
-| `scripts/register_ccu_task.ps1` | 把定时进程注册为 Windows 计划任务：登录后自动启动、无窗口、异常退出 5 分钟后重启；加 `-Remove` 取消 | `powershell -ExecutionPolicy Bypass -File scripts\register_ccu_task.ps1` |
+| `scripts/register_ccu_task.ps1` | 把定时进程注册为 Windows 计划任务：登录后自动启动、无窗口、异常退出 5 分钟后重启；同时注册一个登录后自动打开的日志窗口（`scripts\watch_ccu.cmd`，只读日志，关掉不影响采集，双击可再打开）；加 `-Remove` 取消 | `powershell -ExecutionPolicy Bypass -File scripts\register_ccu_task.ps1` |
 
 公共模块在 `crawler/common/`：`settings.py`（读 `.env`）、`db.py`（`etl_writer` 连接）、`runlog.py`（运行记录）、`http.py`（公共 HTTP 客户端：超时、指数退避重试、限速、User-Agent、日志脱敏；新的接口采集都用它）。测试：`python -m pytest`。
 

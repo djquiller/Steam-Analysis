@@ -24,6 +24,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 if ($Remove) {
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+    Unregister-ScheduledTask -TaskName "$TaskName - Log Window" -Confirm:$false -ErrorAction SilentlyContinue
     Write-Host "Removed task '$TaskName'."
     exit 0
 }
@@ -45,6 +46,19 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
     -Settings $settings -Principal $principal -Force `
     -Description "Hourly Steam concurrent-player snapshots (python -m crawler.scheduler)" | Out-Null
 Start-ScheduledTask -TaskName $TaskName
+
+# Second task: open a console window at logon that shows the collector's log live.
+# It only reads the log; closing that window does not affect the collector.
+# "cmd /c start" gives the viewer a console window of its own; running the .cmd directly
+# as the task action exits at once without showing a window.
+$viewCmd = Join-Path $PSScriptRoot "watch_ccu.cmd"
+$viewAction = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c start `"CCU log`" `"$viewCmd`"" -WorkingDirectory $RepoRoot
+$viewSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) `
+    -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName "$TaskName - Log Window" -Action $viewAction -Trigger $trigger `
+    -Settings $viewSettings -Principal $principal -Force `
+    -Description "Console window showing the CCU collector log (safe to close)" | Out-Null
+Start-ScheduledTask -TaskName "$TaskName - Log Window"
 
 Write-Host "Registered and started task '$TaskName'."
 Write-Host "  working dir : $RepoRoot"
