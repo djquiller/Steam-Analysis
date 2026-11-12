@@ -6,7 +6,7 @@
 
 | 来源 | 用途 | 限流与注意 |
 |---|---|---|
-| Kaggle 公开数据集 | 游戏全量、历史评论打底 | 选评论集时核对字段：`timestamp_created`、`language`、`playtime_at_review`、`voted_up` 缺一不可，大屏热力图 / 语言分布 / 时长分布 / 情感标签都依赖它们 |
+| Kaggle 公开数据集 | 游戏全量、全量评论元数据 | 评论集必须有发表时间、语言、写评论时的游玩时长、是否推荐四个字段，大屏热力图 / 语言分布 / 时长分布 / 情感标签都依赖它们 |
 | Steam Store `appdetails` | 游戏详情、价格、类型 | 约 200 次 / 5 分钟；价格统一请求 `cc=us` |
 | SteamSpy | 拥有者区间、标签、平均时长 | 约 1 次 / 秒；`all` 接口约 1 次 / 分钟 |
 | Steam `appreviews` | 增量评论 | `cursor` 翻页，`num_per_page` 最大 100；`cursor` 需 URL 编码，同一 cursor 重复出现即到底 |
@@ -40,12 +40,16 @@
 | `average_playtime_forever` | `avg_playtime_min` | 单位：分钟 |
 | `genres`（列表） | `dwd_game_genre` | 拆行 |
 | `developers` / `publishers`（列表） | `developer` / `publisher` | 取第一个 |
-| 评论集 `review_id` / `app_id` / `language` | 同名 / `appid` / 同名 | — |
-| `timestamp_created`（Unix 秒） | `timestamp_created` | 转 UTC `DATETIME` |
-| `recommended` | `voted_up` | 与 `appreviews` 接口的 `voted_up` 同义 |
-| `author.playtime_at_review` | `playtime_at_review_min` | 单位：分钟 |
+| 评论集 `review_id` / `game_id` / `language` | 同名 / `appid` / 同名 | — |
+| `reviewed_at`（UTC） | `timestamp_created` | 去掉时区，按 UTC 存 `DATETIME` |
+| `is_positive` | `voted_up` | 与 `appreviews` 接口的 `voted_up` 同义 |
+| `playtime_at_review` | `playtime_at_review_min` | 单位：分钟 |
 
-评论集只到 2021 年初、只覆盖约 200 款游戏。为此，`appreviews` 增量采集按拥有者排序取 Top 300 游戏，补采 2021 年之后的评论。
+评论集是 Parquet 分片（每片约 1.9 GB）。导入时逐片下载，只读取需要的列，不读评论原文和 `user_id`，导入后删除分片文件。评论原文只为情感模型另外抽样保留。评论集已覆盖到 2026 年，所以 `appreviews` 增量补采降为可选项。
+
+## 在线人数采集的游戏范围
+
+游戏集中 `peak_ccu` 最高的 500 款，加上 `owners_mid` 最高的 500 款，去重后作为每小时采集的名单，大约 600–800 款。名单每天随价格快照刷新一次。
 
 ## 待补（数据组填写）
 
