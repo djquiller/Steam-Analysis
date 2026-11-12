@@ -38,6 +38,31 @@
 
 3. 复制 `.env.example` 为 `.env`，填入 `ETL_DB_PASSWORD` 和 `DB_PASSWORD`。
 
+## 导入数据（游戏集 + 1.21 亿条评论）
+
+前提：已完成上面的初始化，`.env` 已填好，Kaggle 令牌放在 `%USERPROFILE%\.kaggle\kaggle.json`，
+已执行 `python -m pip install -r requirements.txt`。
+
+在仓库根目录打开一个终端，运行：
+
+```
+python scripts/load_data.py
+```
+
+它会依次导入游戏集，再逐个处理评论的 13 个分片。每个分片依次执行：下载约 1.9 GB → 导入 `ods` → 抽样原文 → 清洗到 `dwd` → 删除分片文件。每个分片大约 10–12 分钟，全部跑完约 2–3 小时。
+
+| 想做的事 | 命令 |
+|---|---|
+| 看进度：哪些分片做完了、各用了多久 | `python scripts/load_data.py --status` |
+| 中断后继续（关了窗口、断网、重启电脑） | 再运行一次 `python scripts/load_data.py`，已完成的步骤会自动跳过 |
+| 只跑某几个分片 | `python scripts/load_data.py --reviews 5-8` |
+| 处理完保留分片文件 | 加 `--keep-files` |
+
+- 运行期间可以正常用电脑，但不要关掉这个终端窗口；关掉了也没关系，重新运行即可续上。
+- 进度记在数据库表 `steam_ods.etl_progress` 里；每一步的详细数字（行数、耗时）追加在 `data/logs/runs.jsonl`。
+- 中途某个分片失败时（比如下载断了），这条命令会报错退出；直接重新运行即可，该分片未完成的步骤会先清掉半成品再重做。
+- 如果下载反复失败，删除 `data/raw/reviews/` 下对应的 `.parquet` 和 `.kaggle-partial` 文件后再运行。
+
 ## 推荐的服务器设置（root 执行一次，重启后保留）
 
 | 设置 | 作用 |
