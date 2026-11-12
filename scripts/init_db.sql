@@ -122,6 +122,24 @@ CREATE TABLE IF NOT EXISTS etl_progress (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='ETL 断点续跑进度';
 
+-- 在线人数原始快照（ISteamUserStats/GetNumberOfCurrentPlayers，每小时一轮）。
+-- 一款游戏每小时一行，失败的请求也留一行（player_count 为 NULL，error 写原因），
+-- 用来统计哪些 appid 取不到数据。同一小时重跑时覆盖旧行；
+-- 但已经成功的行不会被后来失败的结果覆盖（见 crawler/ccu_snapshot.py）。
+CREATE TABLE IF NOT EXISTS ods_ccu_snapshot (
+  appid         INT UNSIGNED      NOT NULL,
+  snapshot_at   DATETIME          NOT NULL COMMENT 'UTC，本轮所属的整点（向下取整）',
+  fetched_at    DATETIME          NOT NULL COMMENT 'UTC，实际请求完成的时刻',
+  http_status   SMALLINT UNSIGNED          COMMENT '没拿到响应（网络错误）时为 NULL',
+  attempts      TINYINT UNSIGNED  NOT NULL COMMENT '含重试的请求次数',
+  raw_body      TEXT                       COMMENT '响应正文原样保存（最多 2000 字符）',
+  error         VARCHAR(255)               COMMENT '失败原因，成功为 NULL；不含密钥',
+  player_count  INT UNSIGNED               COMMENT '从正文解析出的在线人数，失败为 NULL',
+  PRIMARY KEY (appid, snapshot_at),
+  KEY idx_snapshot_at (snapshot_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='在线人数原始快照（含失败记录）';
+
 -- ---------------------------------------------------------------------
 -- dwd 层：清洗后的明细（字段口径见 docs/schema.md）
 -- ---------------------------------------------------------------------
@@ -187,6 +205,17 @@ CREATE TABLE IF NOT EXISTS dwd_ccu_snapshot (
   KEY idx_snapshot_at (snapshot_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='在线人数快照';
+
+-- 在线人数的采集名单：peak_ccu 前 500 与 owners_mid 前 500 的并集，每天整表重建一次。
+-- 排名规则见 crawler/ccu_watchlist.py；没进某个前 500 的，对应排名为 NULL。
+CREATE TABLE IF NOT EXISTS dwd_ccu_watchlist (
+  appid          INT UNSIGNED      NOT NULL,
+  peak_ccu_rank  SMALLINT UNSIGNED          COMMENT '按 peak_ccu 的名次（1 起），不在前 500 为 NULL',
+  owners_rank    SMALLINT UNSIGNED          COMMENT '按 owners_mid 的名次（1 起），不在前 500 为 NULL',
+  refreshed_at   DATETIME          NOT NULL COMMENT 'UTC，名单生成时刻',
+  PRIMARY KEY (appid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='在线人数采集名单';
 
 CREATE TABLE IF NOT EXISTS dwd_price_history (
   appid          INT UNSIGNED  NOT NULL,
