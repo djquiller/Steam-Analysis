@@ -51,8 +51,21 @@
 
 游戏集中 `peak_ccu` 最高的 500 款，加上 `owners_mid` 最高的 500 款，去重后作为每小时采集的名单，大约 600–800 款。名单每天随价格快照刷新一次。
 
+## 脚本与运行命令
+
+在仓库根目录执行；需要先完成 `storage/README.md` 的初始化并填好 `.env`。每次运行都会追加一行到 `data/logs/runs.jsonl`。
+
+| 脚本 | 作用 | 命令 |
+|---|---|---|
+| `crawler/kaggle_games.py` | 下载 `games.csv` 并导入 `ods_game_kaggle` | `python -m crawler.kaggle_games` |
+| `crawler/kaggle_reviews.py` | 逐片下载评论分片并导入 `ods_review_kaggle` | `python -m crawler.kaggle_reviews --shards 0-12 --delete-after` |
+
+公共模块在 `crawler/common/`：`settings.py`（读 `.env`）、`db.py`（`etl_writer` 连接）、`runlog.py`（运行记录）。
+
+**实测（2026-11-12，本机 i7-14650HX / 32 GB / NVMe）**：游戏集 125,855 行导入用时 22 秒；评论第 0 片 1000 万行导入用时 138 秒（每百万行约 14 秒）；Kaggle 下载速度约 5 MB/s，一个分片约 6 分钟。
+
 ## 待补（数据组填写）
 
 - [x] 选定的 Kaggle 数据集及其字段映射（见上节；下载后核对列名和许可）
-- [ ] 各脚本入口与运行命令
-- [ ] 实测限流与总采集耗时
+- [x] 各脚本入口与运行命令（见上节）
+- [ ] 实测 Steam / SteamSpy 接口限流与总采集耗时
