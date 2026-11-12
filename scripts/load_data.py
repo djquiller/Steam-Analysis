@@ -117,6 +117,13 @@ def review_shard(n: int, done: set, keep_files: bool) -> None:
             os.remove(path)
         return
     needs_file = "ods_review" in todo or "text_sample" in todo
+    # Kaggle 下载中途被打断时，会留下残缺的 .parquet 和一个 .kaggle-partial 标记文件；
+    # 有标记就说明文件不完整，删掉重新下载，否则后续读取会报错。
+    partial = path.with_name(path.name + ".kaggle-partial")
+    if partial.exists():
+        print(f"分片 {n}：发现未下载完的文件，删除后重新下载", flush=True)
+        path.unlink(missing_ok=True)
+        partial.unlink()
     if needs_file and not path.exists():
         print(f"\n=== 下载分片 {n} ===", flush=True)
         kaggle_reviews.download(n, path.parent)
