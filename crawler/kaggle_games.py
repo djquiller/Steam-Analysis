@@ -13,13 +13,13 @@ from __future__ import annotations
 import argparse
 import csv
 import re
-import subprocess
 from pathlib import Path
 
 import pandas as pd
 
 from .common import settings
 from .common.db import connect_etl
+from .common.kaggle_cli import download_file
 from .common.runlog import run_log
 
 DATASET = "fronkongames/steam-games-dataset"
@@ -33,9 +33,7 @@ RENAME = {"appid": "app_id"}
 
 
 def download(dest_dir: Path) -> Path:
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["kaggle", "datasets", "download", DATASET, "-f", FILE, "-p", str(dest_dir)], check=True)
-    return dest_dir / FILE
+    return download_file(DATASET, FILE, dest_dir)
 
 
 def to_snake(name: str) -> str:

@@ -94,6 +94,34 @@ CREATE TABLE IF NOT EXISTS ods_review_kaggle (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='Kaggle 评论集原始元数据（不含原文与用户 ID）';
 
+-- 评论原文抽样：每款游戏最多保留 k 条（供关键词分析与情感模型）。
+-- sample_key 是 review_id 的确定性哈希，每款游戏保留 sample_key 最小的 k 条，
+-- 等价于每款游戏均匀随机抽 k 条；跨分片可合并、重跑结果不变。
+CREATE TABLE IF NOT EXISTS ods_review_text_sample (
+  review_id    BIGINT UNSIGNED NOT NULL,
+  game_id      INT UNSIGNED    NOT NULL,
+  language     VARCHAR(32),
+  is_positive  TINYINT(1),
+  sample_key   BIGINT UNSIGNED NOT NULL,
+  review       MEDIUMTEXT,
+  src_shard    SMALLINT        NOT NULL,
+  PRIMARY KEY (review_id),
+  KEY idx_game_key (game_id, sample_key),
+  KEY idx_src_shard (src_shard)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='评论原文分层抽样（每款游戏最多 k 条）';
+
+-- ETL 进度：scripts/load_data.py 每完成一个步骤记一行，中断后重跑会跳过已完成的步骤。
+CREATE TABLE IF NOT EXISTS etl_progress (
+  step         VARCHAR(32)  NOT NULL COMMENT 'ods_review / text_sample / dwd_review …',
+  shard        SMALLINT     NOT NULL COMMENT '不分片的步骤记 -1',
+  rows_done    BIGINT,
+  elapsed_sec  DECIMAL(10,1),
+  finished_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (step, shard)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='ETL 断点续跑进度';
+
 -- ---------------------------------------------------------------------
 -- dwd 层：清洗后的明细（字段口径见 docs/schema.md）
 -- ---------------------------------------------------------------------

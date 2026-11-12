@@ -7,7 +7,8 @@
 
 为什么这样做：
 - 全量 1.21 亿条、约 23 GB，逐片处理，磁盘上同时只留一个分片。
-- 只读需要的列：评论原文（体积大头）和评论者哈希 ID（隐私）不读不存。
+- 只读需要的列：评论原文（体积大头）和评论者哈希 ID（隐私）不进这张表；
+  原文只按"每款游戏最多 k 条"抽样另存（见 crawler/kaggle_review_text.py）。
 - 用 LOAD DATA LOCAL INFILE 批量导入，比逐行 INSERT 快一个数量级；
   需要服务器开启 local_infile（见 storage/README.md）。
 - 可重跑：导入前先删掉该分片已有的行（按 src_shard），再用 IGNORE 跳过重复主键。
@@ -16,16 +17,15 @@ from __future__ import annotations
 
 import argparse
 import os
-import subprocess
 import tempfile
 import time
 from pathlib import Path
 
-import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 from .common import settings
 from .common.db import connect_etl
+from .common.kaggle_cli import download_file
 from .common.runlog import run_log
 
 DATASET = "sergiodelcarpio/steam-reviews"
@@ -56,10 +56,7 @@ def parse_shards(spec: str) -> list[int]:
 
 
 def download(n: int, dest_dir: Path) -> Path:
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["kaggle", "datasets", "download", DATASET, "-f", shard_file(n), "-p", str(dest_dir)],
-                   check=True)
-    return dest_dir / shard_file(n)
+    return download_file(DATASET, shard_file(n), dest_dir)
 
 
 def write_batch_tsv(batch, path: Path) -> int:
