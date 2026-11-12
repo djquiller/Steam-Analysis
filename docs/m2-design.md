@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 小组成员 | 成员 A：DJQuiller（可视化组）；成员 B：<队友姓名>（数据组） |
+| 小组成员 | 成员 A：DJQuiller（可视化组）；成员 B：Mili（数据组） |
 | 文档版本 | v1.0（M2 架构评审） |
 | 相关契约 | 表结构 `docs/schema.md`（v0.2）、接口 `docs/api.md`（v0.2）、数据来源 `docs/data-sources.md` |
 
