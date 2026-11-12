@@ -35,8 +35,19 @@
 
 在 K = 3–8 范围内，用肘部法和轮廓系数选 K，最终 K 值与各簇业务含义在拿到全量数据后确定。
 
+## 脚本与运行命令
+
+在仓库根目录执行。
+
+| 脚本 | 作用 | 命令 |
+|---|---|---|
+| `analysis/build_dwd_game.py` | `ods_game_kaggle` → `dwd_game` + `dwd_game_genre`（全量重建） | `python -m analysis.build_dwd_game` |
+| `analysis/build_dwd_review.py` | `ods_review_kaggle` → `dwd_review`（按分片，`INSERT … SELECT`） | `python -m analysis.build_dwd_review --shards 0-12` |
+
+**实测（2026-11-12）**：游戏清洗 12.6 秒，得到 125,854 款游戏、338,583 条游戏 × 类型、33 种类型；评论第 0 片清洗 141 秒，1000 万行无丢弃。
+
 ## 待补（数据组填写）
 
 - [x] "热销"标签的最终定义（见上节）
 - [ ] 聚类最终 K 值与各簇业务含义（方法已定，数值待全量数据）
-- [ ] 各脚本入口与运行命令
+- [x] 各脚本入口与运行命令（见上节）
