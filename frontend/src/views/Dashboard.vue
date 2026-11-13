@@ -4,7 +4,7 @@
  * - 标签页是子路由（/overview、/market、/players、/hits），可以直接用链接打开某一页；
  * - 切页时标题和卡片用 CSS 动画依次落位（不依赖帧回调，见下方样式注释）；已打开过的页用 KeepAlive 缓存；
  * - 自动轮播：每页停留 CAROUSEL_SECONDS 秒，手动切页即停止；键盘 ← → / 1–4 切换；
- * - 导航折叠状态记在浏览器本地，刷新后保持。
+ * - 点左上角 Logo 折叠 / 展开导航（见 SideNav），状态记在浏览器本地，刷新后保持。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -78,19 +78,10 @@ onBeforeUnmount(() => {
 <template>
   <ScreenContainer>
     <div class="shell">
-      <SideNav v-model:autoplay="autoplay" :collapsed="collapsed" @manual-nav="autoplay = false" />
+      <SideNav v-model:autoplay="autoplay" v-model:collapsed="collapsed" @manual-nav="autoplay = false" />
 
       <section class="main">
         <header class="head">
-          <button
-            class="toggle"
-            :class="{ flipped: collapsed }"
-            :aria-label="collapsed ? '展开导航' : '折叠导航'"
-            :aria-expanded="!collapsed"
-            @click="collapsed = !collapsed"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 6l-6 6 6 6M19 6l-6 6 6 6" /></svg>
-          </button>
           <h1 :key="current.name" class="title">
             {{ current.label }}<span>{{ current.hint }}</span>
           </h1>
@@ -132,41 +123,6 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 22px;
-}
-.toggle {
-  width: 48px;
-  height: 48px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--text-primary);
-  cursor: pointer;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition:
-    border-color 0.35s var(--ease-out),
-    transform 0.35s var(--ease-spring);
-}
-.toggle:hover {
-  border-color: rgba(212, 214, 255, 0.4);
-}
-.toggle:active {
-  transform: scale(0.92);
-}
-.toggle svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: transform 0.6s var(--ease-spring);
-}
-.toggle.flipped svg {
-  transform: rotate(180deg);
 }
 
 /* 页标题：标签名白色 + 说明薰衣草色，切页时重新挂载并播放入场动画 */

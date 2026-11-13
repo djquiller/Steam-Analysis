@@ -3,9 +3,10 @@
  * 左侧可折叠导航：品牌 · 四个标签页 · 自动轮播 · 数据更新时间。
  * - 展开 304px：图标 + 编号 + 标签名 + 说明；折叠 92px：只剩图标，悬停用浏览器原生提示看名字。
  * - 当前页的高亮块是一个独立的层，切页时沿竖直方向弹性滑到新位置，而不是闪一下。
+ * - 左上角的 Logo 就是折叠开关：悬停时弹性摆正、放大并扫过一道光；按下压缩，松开后果冻式回弹。
  * 文字与按钮都沿用改版前顶栏里的那些，没有新增。
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import { metaApi } from '@/api'
@@ -13,11 +14,24 @@ import { useRemote } from '@/composables/useRemote'
 import { dateTime } from '@/theme/format'
 import { CAROUSEL_SECONDS, TABS } from '@/views/tabs/registry'
 
-const props = defineProps<{ collapsed: boolean }>()
+const collapsed = defineModel<boolean>('collapsed', { required: true })
 const autoplay = defineModel<boolean>('autoplay', { required: true })
 const emit = defineEmits<{ (e: 'manual-nav'): void }>()
 
 const route = useRoute()
+
+// 点击 Logo：切换折叠，并重播一次回弹动画。
+// 先去掉 class、读一次 offsetWidth 强制浏览器结算样式，再加回去，动画才会从头播放
+// （不用 requestAnimationFrame，浏览器被遮挡时帧回调会暂停）。
+const logo = ref<HTMLButtonElement>()
+function onLogo() {
+  collapsed.value = !collapsed.value
+  const el = logo.value
+  if (!el) return
+  el.classList.remove('pop')
+  void el.offsetWidth
+  el.classList.add('pop')
+}
 const updated = useRemote((s) => metaApi.updatedAt(s))
 
 const ITEM_H = 64
@@ -34,9 +48,16 @@ const ICONS: Record<string, string> = {
 </script>
 
 <template>
-  <aside class="side" :class="{ collapsed: props.collapsed }">
+  <aside class="side" :class="{ collapsed }">
     <div class="brand">
-      <span class="logo" aria-hidden="true" />
+      <button
+        ref="logo"
+        class="logo"
+        :aria-label="collapsed ? '展开导航' : '折叠导航'"
+        :aria-expanded="!collapsed"
+        @click="onLogo"
+        @animationend="logo?.classList.remove('pop')"
+      />
       <div class="brand-text">
         <div class="name">Steam 玩家生态与热销趋势</div>
         <div class="sub">市场在变 · 玩家在想什么 · 什么游戏会火</div>
@@ -55,7 +76,7 @@ const ICONS: Record<string, string> = {
         :to="t.path"
         class="item"
         active-class="on"
-        :title="props.collapsed ? `${t.label} · ${t.hint}` : undefined"
+        :title="collapsed ? `${t.label} · ${t.hint}` : undefined"
         @click="emit('manual-nav')"
       >
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS[t.name]" /></svg>
@@ -130,11 +151,20 @@ const ICONS: Record<string, string> = {
   padding: 0 6px;
   min-height: 48px;
 }
+.collapsed .brand {
+  padding: 0 12px;
+}
+/* Logo = 折叠开关。静止时微微倾斜；悬停弹性摆正放大（缓动带过冲）；按下快速压缩；点击后播放果冻回弹 */
 .logo {
+  position: relative;
+  overflow: hidden;
   width: 40px;
   height: 40px;
   flex: none;
+  padding: 0;
+  border: 0;
   border-radius: 12px;
+  cursor: pointer;
   background:
     radial-gradient(circle at 30% 25%, #ffffff, transparent 45%),
     linear-gradient(140deg, #d4d6ff, #7f84dc 55%, #2c2e4a);
@@ -142,6 +172,60 @@ const ICONS: Record<string, string> = {
     0 0 24px rgba(163, 167, 240, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transform: rotate(-8deg);
+  transition:
+    transform 0.7s var(--ease-spring),
+    box-shadow 0.5s var(--ease-out),
+    border-radius 0.5s var(--ease-out);
+}
+/* 悬停时一道高光从左上斜扫到右下 */
+.logo::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.85) 50%, transparent 60%);
+  transform: translate(-60%, -60%);
+  transition: transform 0.9s var(--ease-out);
+  pointer-events: none;
+}
+.logo:hover {
+  transform: rotate(0deg) scale(1.12);
+  border-radius: 14px;
+  box-shadow:
+    0 0 40px rgba(163, 167, 240, 0.75),
+    0 0 0 4px rgba(163, 167, 240, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.logo:hover::after {
+  transform: translate(60%, 60%);
+}
+.logo:active {
+  transform: rotate(-14deg) scale(0.86);
+  transition-duration: 0.15s;
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+.logo:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 4px;
+}
+.logo.pop {
+  animation: logo-pop 0.75s var(--ease-out);
+}
+@keyframes logo-pop {
+  0% {
+    transform: rotate(-14deg) scale(0.86);
+  }
+  35% {
+    transform: rotate(10deg) scale(1.22, 1.02);
+  }
+  55% {
+    transform: rotate(-6deg) scale(0.96, 1.12);
+  }
+  75% {
+    transform: rotate(3deg) scale(1.08, 1.02);
+  }
+  100% {
+    transform: rotate(0deg) scale(1.12);
+  }
 }
 .brand-text .name {
   font-size: 16px;
