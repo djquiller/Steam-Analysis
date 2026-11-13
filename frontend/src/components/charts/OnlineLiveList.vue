@@ -1,0 +1,139 @@
+<script setup lang="ts">
+/** 实时在线榜：60 秒轮询，列表自动滚动；和上一个采集时刻比较显示升降 */
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+import { rankApi } from '@/api'
+import Panel from '@/components/layout/Panel.vue'
+import { useRemote } from '@/composables/useRemote'
+import { dateTime, intNum } from '@/theme/format'
+
+const router = useRouter()
+const r = useRemote((s) => rankApi.onlineLive(20, s), [], { pollMs: 60_000 })
+const items = computed(() => r.data.value?.items ?? [])
+
+const SCROLL_MIN = 7
+
+/** 超过一屏时把列表拼两遍，配合 translateY(-50%) 做无缝循环滚动 */
+const rows = computed(() => {
+  const list = items.value.map((it) => {
+    const d = it.player_count_prev ? (it.player_count - it.player_count_prev) / it.player_count_prev : null
+    return { ...it, delta: d }
+  })
+  return list.length >= SCROLL_MIN ? [...list, ...list] : list
+})
+</script>
+
+<template>
+  <Panel title="实时在线榜" :note="`在线人数（人）· 每小时采集 · 每 60 秒刷新 · ${dateTime(r.data.value?.snapshot_at)}`">
+    <div v-if="items.length" class="list" :class="{ scroll: items.length >= SCROLL_MIN }">
+      <div class="track">
+        <div v-for="(it, i) in rows" :key="i" class="row" @click="router.push(`/game/${it.appid}`)">
+          <span class="rank" :class="{ top: it.rank <= 3 }">{{ it.rank }}</span>
+          <span class="name" :title="it.name">{{ it.name }}</span>
+          <span class="count">{{ intNum(it.player_count) }}</span>
+          <span class="delta" :class="{ up: (it.delta ?? 0) > 0, down: (it.delta ?? 0) < 0 }">
+            <template v-if="it.delta === null">—</template>
+            <template v-else>{{ it.delta >= 0 ? '▲' : '▼' }} {{ Math.abs(it.delta * 100).toFixed(1) }}%</template>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div v-else class="state">
+      <template v-if="r.state.value === 'loading'">加载中…</template>
+      <template v-else-if="r.state.value === 'error'">
+        <span class="err">{{ r.error.value }}</span>
+        <button class="retry" @click="r.reload">重试</button>
+      </template>
+      <template v-else>还没有在线人数榜单（等待每小时快照聚合）</template>
+    </div>
+    <div v-if="r.state.value === 'error' && items.length" class="stale">数据未更新</div>
+  </Panel>
+</template>
+
+<style scoped>
+.list {
+  height: 100%;
+  overflow: hidden;
+}
+.list.scroll .track {
+  animation: roll 40s linear infinite;
+}
+.list.scroll:hover .track {
+  animation-play-state: paused;
+}
+@keyframes roll {
+  to {
+    transform: translateY(-50%);
+  }
+}
+.row {
+  display: grid;
+  grid-template-columns: 28px 1fr 90px 70px;
+  align-items: center;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 13px;
+  border-bottom: 1px dashed rgba(102, 192, 244, 0.1);
+  cursor: pointer;
+}
+.row:hover {
+  background: var(--accent-dim);
+}
+.rank {
+  font-family: var(--font-number);
+  color: var(--text-secondary);
+}
+.rank.top {
+  color: var(--accent);
+  font-weight: 700;
+}
+.name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.count {
+  text-align: right;
+  font-family: var(--font-number);
+  color: var(--text-strong);
+}
+.delta {
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.delta.up {
+  color: var(--positive);
+}
+.delta.down {
+  color: var(--negative);
+}
+.state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.err {
+  color: var(--negative);
+}
+.retry {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 12px;
+  cursor: pointer;
+}
+.stale {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 11px;
+  color: var(--warning);
+}
+</style>
