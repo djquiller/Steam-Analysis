@@ -1,0 +1,55 @@
+/* Steam 深色科技蓝主题的 CSS 变量（与 frontend/CLAUDE.md "视觉 token" 一致）。
+   ECharts 用的同一套颜色在 steam-dark.ts 里，两边改色要一起改。 */
+:root {
+  --bg-base: #171a21;
+  --bg-panel: #1b2838;
+  --bg-raised: #2a475e;
+  --accent: #66c0f4;
+  --accent-dim: rgba(102, 192, 244, 0.16);
+  --text-primary: #c7d5e0;
+  --text-secondary: #8f98a0;
+  --text-strong: #ffffff;
+  --positive: #a4d007;
+  --negative: #c35c2c;
+  --warning: #e8a33d;
+
+  --font-body: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+  --font-number: 'DIN Alternate', 'Bahnschrift', 'Segoe UI', 'Roboto Mono', monospace;
+
+  --radius: 6px;
+  --gap: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: var(--accent);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-raised);
+  border-radius: 3px;
+}
