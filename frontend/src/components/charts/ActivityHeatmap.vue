@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, WEEKDAYS } from '@/theme/format'
-import { color, font } from '@/theme/steam-dark'
+import { color, font, sequential } from '@/theme/steam-dark'
 
 const { params } = storeToRefs(useFiltersStore())
 const r = useRemote((s) => ecosystemApi.activityHeatmap(params.value, s), [params])
@@ -38,13 +38,13 @@ const option = computed<ChartOption | null>(() => {
       itemWidth: 12,
       calculable: false,
       text: ['多', '少'],
-      inRange: { color: [color.bgPanel, '#2a5a7a', color.accent, '#d6f0ff'] },
+      inRange: { color: sequential },
     },
     series: [
       {
         type: 'heatmap',
         data: d.cells.map((c) => [c.hour, c.weekday, c.review_cnt]),
-        itemStyle: { borderColor: color.bgPanel, borderWidth: 1 },
+        itemStyle: { borderColor: color.bgPanel, borderWidth: 2, borderRadius: 3 },
         emphasis: { itemStyle: { borderColor: '#fff' } },
       },
     ],

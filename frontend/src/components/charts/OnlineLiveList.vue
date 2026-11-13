@@ -75,7 +75,7 @@ const rows = computed(() => {
   padding: 0 10px;
   font-size: 18px;
   border-radius: 8px;
-  border-bottom: 1px dashed rgba(102, 192, 244, 0.1);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
   cursor: pointer;
 }
 .row:hover {

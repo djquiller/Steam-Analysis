@@ -51,7 +51,8 @@ const option = computed<ChartOption | null>(() => {
             visualMin: Math.min(...rates),
             visualMax: Math.max(...rates),
             // 最亮只到主强调色，保证白字标签看得清
-            color: ['#13304a', '#1b5a80', '#2a85b8', '#66c0f4'],
+            // 偏暗的一段色阶：大多数方块是深色磨砂，好评占比高的才亮起来
+            color: ['#1f2036', '#2e305a', '#4a4e92', '#8a8ee0'],
             colorMappingBy: 'value',
           },
         ],
@@ -72,7 +73,7 @@ const option = computed<ChartOption | null>(() => {
           value: [x.game_cnt, x.positive_rate ?? 0],
           itemStyle:
             genre.value === x.genre
-              ? { borderColor: color.warning, borderWidth: 3 }
+              ? { borderColor: color.accentBright, borderWidth: 3, shadowColor: color.accent, shadowBlur: 18 }
               : genre.value
                 ? { opacity: 0.45 }
                 : {},

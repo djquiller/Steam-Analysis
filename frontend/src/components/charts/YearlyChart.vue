@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { intNum } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { barGradient, color } from '@/theme/steam-dark'
 
 const { params } = storeToRefs(useFiltersStore())
 const r = useRemote((s) => trendApi.yearly(params.value, s), [params])
@@ -42,13 +42,8 @@ const option = computed<ChartOption | null>(() => {
         type: 'bar',
         data: d.map((x) => x.game_cnt),
         barMaxWidth: 26,
-        itemStyle: {
-          borderRadius: [2, 2, 0, 0],
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{ offset: 0, color: color.accent }, { offset: 1, color: 'rgba(102,192,244,0.15)' }],
-          },
-        },
+        itemStyle: { borderRadius: [8, 8, 2, 2], color: barGradient() },
+        emphasis: { itemStyle: { color: barGradient(color.accentBright, 0.2) } },
       },
       {
         name: '均价',
@@ -57,8 +52,8 @@ const option = computed<ChartOption | null>(() => {
         smooth: true,
         symbol: 'none',
         data: d.map((x) => x.avg_price_usd),
-        lineStyle: { color: color.warning, width: 3, shadowColor: 'rgba(232,163,61,0.5)', shadowBlur: 10 },
-        itemStyle: { color: color.warning },
+        lineStyle: { color: '#ffffff', width: 2.5, type: [6, 6], shadowColor: 'rgba(212, 214, 255, 0.8)', shadowBlur: 12 },
+        itemStyle: { color: '#ffffff' },
       },
     ],
   }

@@ -35,7 +35,7 @@ const option = computed<ChartOption | null>(() => {
         boxWidth: ['30%', '55%'],
         data: d.map((x) => ({
           value: [x.min, x.q1, x.median, x.q3, x.max],
-          itemStyle: { color: 'rgba(102,192,244,0.18)', borderColor: priceBucketMeta[x.price_bucket].color, borderWidth: 1.5 },
+          itemStyle: { color: 'rgba(163, 167, 240, 0.14)', borderColor: priceBucketMeta[x.price_bucket].color, borderWidth: 2, shadowColor: 'rgba(163, 167, 240, 0.35)', shadowBlur: 12 },
         })),
       },
     ],

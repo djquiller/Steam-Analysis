@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, pct } from '@/theme/format'
-import { color, font } from '@/theme/steam-dark'
+import { color, font, hbarGradient } from '@/theme/steam-dark'
 
 // Steam 语言代码 → 中文名（只列常见的，其余显示原代码）
 const LANG: Record<string, string> = {
@@ -42,7 +42,7 @@ const option = computed<ChartOption | null>(() => {
         type: 'bar',
         barMaxWidth: 28,
         data: d.items.map((x) => x.review_cnt),
-        itemStyle: { color: color.accent, borderRadius: [0, 3, 3, 0] },
+        itemStyle: { color: hbarGradient(), borderRadius: [0, 14, 14, 0] },
         label: { show: true, position: 'right', color: color.text, fontSize: font.small, formatter: (p: any) => pct(d.items[p.dataIndex]?.share) },
       },
     ],

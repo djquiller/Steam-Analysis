@@ -77,10 +77,10 @@ function display(c: Card): string {
 
 <template>
   <div class="kpis">
-    <div v-for="c in cards" :key="c.key" class="card">
+    <div v-for="c in cards" :key="c.key" class="card glass">
       <div class="label">{{ c.label }}</div>
       <div class="value">
-        <span class="num">{{ k ? display(c) :kpi.state.value === 'loading' ? '…' : '—' }}</span>
+        <span class="num">{{ k ? display(c) : kpi.state.value === 'loading' ? '…' : '—' }}</span>
         <span class="unit">{{ c.unit }}</span>
       </div>
       <div class="note">
@@ -100,54 +100,55 @@ function display(c: Card): string {
   height: 100%;
 }
 .card {
-  position: relative;
-  background:
-    radial-gradient(ellipse at 0% 0%, rgba(102, 192, 244, 0.22), transparent 60%),
-    var(--bg-panel);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  padding: 22px 28px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
+/* 右侧一块淡淡的网格纹理，呼应参考稿 KPI 卡里的小图区域（纯装饰，不放数据） */
 .card::after {
   content: '';
   position: absolute;
-  left: 28px;
-  top: -1px;
-  width: 90px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  box-shadow: 0 0 12px var(--accent-glow);
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 42%;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 100% 22px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 22px 100%;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 60%);
+  mask: linear-gradient(90deg, transparent, #000 60%);
+  pointer-events: none;
 }
 .label {
-  font-size: 20px;
+  position: relative;
+  font-size: 18px;
   color: var(--text-secondary);
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 .value {
+  position: relative;
   display: flex;
+  white-space: nowrap;
   align-items: baseline;
   gap: 10px;
 }
 .num {
   font-family: var(--font-number);
   font-size: var(--fs-kpi);
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.1;
+  letter-spacing: -0.5px;
   color: var(--text-strong);
-  letter-spacing: 1px;
-  text-shadow: 0 0 18px rgba(102, 192, 244, 0.45);
+  text-shadow: 0 0 24px rgba(163, 167, 240, 0.35);
 }
 .unit {
   font-size: 22px;
   color: var(--accent);
 }
 .note {
+  position: relative;
   font-size: var(--fs-small);
   color: var(--text-secondary);
   white-space: nowrap;

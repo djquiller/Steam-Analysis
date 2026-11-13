@@ -1,23 +1,23 @@
-/* 大屏的 CSS 变量（frontend/CLAUDE.md "视觉 token"）。
+/* 大屏的 CSS 变量与公共样式（frontend/CLAUDE.md "视觉 token"）。
    ECharts 用的同一套颜色与字号在 steam-dark.ts 里，两边改要一起改。
-   风格：深青黑底 + 半透明毛玻璃卡片 + Steam 蓝强调；字号按 3–5 米外观看放大。 */
+   风格（2026-11-13 改版）：深靛黑底 + 薰衣草紫单色系 + 半透明磨砂卡片 + 沿描边缓慢流动的光。 */
 :root {
-  --bg-base: #0b1218;
-  --bg-panel: rgba(20, 34, 46, 0.62);
-  --bg-panel-solid: #122230;
-  --bg-raised: #2a475e;
-  --glass-border: rgba(102, 192, 244, 0.18);
+  --bg-base: #0b0c16;
+  --bg-panel: rgba(30, 31, 52, 0.48);
+  --bg-panel-solid: #161726;
+  --bg-raised: #2c2e4a;
+  --glass-border: rgba(255, 255, 255, 0.07);
   --glass-highlight: rgba(255, 255, 255, 0.06);
-  --accent: #66c0f4;
-  --accent-dim: rgba(102, 192, 244, 0.16);
-  --accent-glow: rgba(102, 192, 244, 0.45);
-  --text-primary: #d3dee7;
-  --text-secondary: #8fa3b3;
+  --accent: #a3a7f0;
+  --accent-bright: #d4d6ff;
+  --accent-dim: rgba(163, 167, 240, 0.14);
+  --accent-glow: rgba(163, 167, 240, 0.45);
+  --text-primary: #e3e4f2;
+  --text-secondary: #8c8ea9;
   --text-strong: #ffffff;
-  --positive: #a4d007;
-  --negative: #c35c2c;
-  --warning: #e8a33d;
-  --magenta: #e05ea8;
+  --positive: #9ed6b8;
+  --negative: #e59aa6;
+  --warning: #e3cf9a;
 
   /* 字体文件随前端打包（src/theme/fonts.ts），不使用系统字体；与 FONT_FAMILY 保持一致 */
   --font-body: 'Inter', 'Noto Sans SC', sans-serif;
@@ -27,10 +27,14 @@
   --fs-small: 14px;
   --fs-body: 16px;
   --fs-title: 22px;
-  --fs-kpi: 64px;
+  --fs-kpi: 58px;
 
-  --radius: 16px;
+  --radius: 20px;
   --gap: 20px;
+
+  /* 动效曲线：进入用"快出慢停"，位移类用略带回弹的弹簧感 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
 }
 
 * {
@@ -59,6 +63,7 @@ input {
 /* 数字用等宽数字，翻牌和榜单滚动时不左右跳动 */
 body {
   font-feature-settings: 'tnum' 1;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -72,4 +77,103 @@ a {
 ::-webkit-scrollbar-thumb {
   background: var(--bg-raised);
   border-radius: 3px;
+}
+
+/* ------------------------------------------------------------------ 磨砂卡片 + 流光描边
+   用法：给元素加 class="glass"。
+   - 底：半透明深靛 + 顶部一抹高光，backdrop-filter 磨砂；
+   - 流光：::before 是一圈锥形渐变描边，角度 --flow-angle 持续旋转，像光沿卡片边缘缓缓流动；
+     用 mask 只露出 1px 的边框，不遮内容；
+   - 悬停：卡片轻微上浮，流光变亮变快。 */
+@property --flow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.glass {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.055), transparent 42%),
+    var(--bg-panel);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(22px) saturate(130%);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    transform 0.5s var(--ease-out),
+    box-shadow 0.5s var(--ease-out),
+    border-color 0.5s var(--ease-out);
+}
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--flow-angle),
+    transparent 0deg,
+    rgba(212, 214, 255, 0) 40deg,
+    rgba(212, 214, 255, 0.55) 80deg,
+    rgba(255, 255, 255, 0.9) 95deg,
+    rgba(212, 214, 255, 0.55) 110deg,
+    rgba(212, 214, 255, 0) 150deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.45;
+  pointer-events: none;
+  animation: flow-spin 9s linear infinite;
+  transition: opacity 0.5s var(--ease-out);
+  z-index: 1;
+}
+.glass:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.11);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(163, 167, 240, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.glass:hover::before {
+  opacity: 1;
+  animation-duration: 4s;
+}
+@keyframes flow-spin {
+  to {
+    --flow-angle: 360deg;
+  }
+}
+
+/* 卡片入场：淡入 + 上移 + 去模糊；同一页的卡片按顺序错开，看起来像依次落位 */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* 系统设置了"减少动态效果"时关掉所有装饰性动画 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

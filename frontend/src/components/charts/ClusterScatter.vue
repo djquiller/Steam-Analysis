@@ -36,7 +36,7 @@ const option = computed<ChartOption | null>(() => {
       type: 'scatter',
       symbolSize: 8,
       large: true,
-      itemStyle: { color: palette[i % palette.length], opacity: 0.75 },
+      itemStyle: { color: palette[i % palette.length], opacity: 0.8, shadowColor: palette[i % palette.length], shadowBlur: 6 },
       data: d.points.filter((p) => p.cluster_id === c.cluster_id).map((p) => ({ value: [p.x, p.y], raw: p })),
     })),
   }

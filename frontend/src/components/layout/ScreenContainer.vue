@@ -5,7 +5,7 @@
  * 缩放比取 min(窗口宽 / 1920, 窗口高 / 1080)，保证字号与卡片按比例放大缩小；
  * 画布尺寸再按窗口比例补齐：
  * - 窗口比 16:9 宽（带鱼屏、浏览器全屏后高度变小）：画布高 1080，宽度大于 1920；
- * - 窗口比 16:9 窄（4:3 投影）：画布宽 1920，高度大于 1080。
+ * - 窗口比 16:9 窄（16:10、4:3 投影）：画布宽 1920，高度大于 1080。
  * 内部布局都是 grid / flex，多出来的宽高由卡片分掉，所以写样式时按"至少 1920×1080"来设计。
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
@@ -36,6 +36,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', fit))
       class="screen"
       :style="{ width: `${size.w}px`, height: `${size.h}px`, transform: `scale(${scale})` }"
     >
+      <div class="sheen" aria-hidden="true" />
       <slot />
     </div>
   </div>
@@ -53,12 +54,36 @@ onBeforeUnmount(() => window.removeEventListener('resize', fit))
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  /* 深青黑底 + 几团柔和的光晕 + 极淡的点阵，给玻璃卡片一个有纵深的背景 */
+  overflow: hidden;
+  /* 深靛黑底 + 右上角一片薰衣草色的天光 + 左下角暗紫光晕，给磨砂卡片一个有纵深的背景 */
   background:
-    radial-gradient(ellipse 900px 600px at 12% 8%, rgba(102, 192, 244, 0.16), transparent 70%),
-    radial-gradient(ellipse 800px 700px at 92% 85%, rgba(38, 166, 154, 0.14), transparent 70%),
-    radial-gradient(ellipse 600px 500px at 70% 20%, rgba(224, 94, 168, 0.07), transparent 70%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.045) 1px, transparent 1.5px) 0 0 / 28px 28px,
-    var(--bg-base);
+    radial-gradient(ellipse 1100px 700px at 88% -12%, rgba(150, 155, 225, 0.28), transparent 70%),
+    radial-gradient(ellipse 900px 800px at -5% 105%, rgba(90, 94, 168, 0.22), transparent 70%),
+    radial-gradient(ellipse 700px 500px at 45% 55%, rgba(60, 62, 110, 0.18), transparent 70%),
+    linear-gradient(160deg, #11121f 0%, #0b0c16 55%, #0d0e1b 100%);
+}
+/* 流光：一束很淡的斜向光带缓慢扫过整个背景，周期 18 秒 */
+.sheen {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(212, 214, 255, 0.045) 46%,
+    rgba(212, 214, 255, 0.085) 50%,
+    rgba(212, 214, 255, 0.045) 54%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  animation: sheen 18s ease-in-out infinite;
+}
+@keyframes sheen {
+  0% {
+    background-position: 130% 0;
+  }
+  100% {
+    background-position: -30% 0;
+  }
 }
 </style>

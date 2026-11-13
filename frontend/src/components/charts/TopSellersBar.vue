@@ -16,7 +16,7 @@ import Segmented from '@/components/layout/Segmented.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, dateTime, intNum, pct, usd } from '@/theme/format'
-import { color, font } from '@/theme/steam-dark'
+import { color, font, hbarGradient } from '@/theme/steam-dark'
 
 const router = useRouter()
 const { params } = storeToRefs(useFiltersStore())
@@ -61,7 +61,7 @@ const option = computed<ChartOption | null>(() => {
         realtimeSort: true,
         data: d.map((x, i) => ({
           value: val(x),
-          itemStyle: { color: i < 3 ? color.accent : 'rgba(102,192,244,0.55)', borderRadius: [0, 6, 6, 0] },
+          itemStyle: { color: i < 3 ? hbarGradient('#ffffff') : hbarGradient(color.accent), borderRadius: [0, 18, 18, 0], shadowColor: i < 3 ? 'rgba(212, 214, 255, 0.45)' : 'transparent', shadowBlur: 14 },
         })),
         barMaxWidth: 36,
         label: {

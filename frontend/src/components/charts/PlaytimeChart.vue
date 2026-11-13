@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, pct } from '@/theme/format'
-import { color, font } from '@/theme/steam-dark'
+import { barGradient, color, font } from '@/theme/steam-dark'
 
 const { params } = storeToRefs(useFiltersStore())
 const r = useRemote((s) => ecosystemApi.playtimeDist(params.value, s), [params])
@@ -38,7 +38,7 @@ const option = computed<ChartOption | null>(() => {
         type: 'bar',
         barCategoryGap: '12%',
         data: d.bins.map((b) => b.review_cnt),
-        itemStyle: { color: color.positive, opacity: 0.85, borderRadius: [2, 2, 0, 0] },
+        itemStyle: { color: barGradient(color.accentBright), borderRadius: [8, 8, 2, 2] },
       },
     ],
   }

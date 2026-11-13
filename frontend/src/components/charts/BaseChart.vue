@@ -49,7 +49,9 @@ onMounted(async () => {
   if (!el.value) return
   chart.value = echarts.init(el.value, THEME_NAME, { renderer: 'canvas' })
   chart.value.on('click', (p) => emit('chart-click', p as echarts.ECElementEvent))
-  observer = new ResizeObserver(() => chart.value?.resize())
+  // 侧栏折叠时容器宽度连续变化 0.6 秒，每帧都会触发 resize；关掉 resize 自带的过渡动画，
+  // 图表跟着容器实时拉伸，而不是每帧重新播放一次变形动画
+  observer = new ResizeObserver(() => chart.value?.resize({ animation: { duration: 0 } }))
   observer.observe(el.value)
   document.fonts?.addEventListener('loadingdone', onFontsLoaded)
   render()
@@ -122,8 +124,9 @@ const hasOption = () => props.option !== null && !props.empty
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 2px dashed rgba(102, 192, 244, 0.45);
-  box-shadow: 0 0 24px rgba(102, 192, 244, 0.15);
+  border: 2px dashed rgba(163, 167, 240, 0.45);
+  box-shadow: 0 0 24px rgba(163, 167, 240, 0.15);
+  animation: empty-spin 14s linear infinite;
 }
 .overlay.error {
   color: var(--negative);
@@ -144,7 +147,7 @@ const hasOption = () => props.option !== null && !props.empty
   right: 0;
   font-size: var(--fs-small);
   color: var(--warning);
-  background: rgba(232, 163, 61, 0.14);
+  background: rgba(227, 207, 154, 0.12);
   border-radius: 6px;
   padding: 2px 10px;
 }
@@ -161,6 +164,11 @@ const hasOption = () => props.option !== null && !props.empty
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+@keyframes empty-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes spin {
   to {

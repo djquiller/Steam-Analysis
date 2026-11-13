@@ -14,7 +14,7 @@ import Panel from '@/components/layout/Panel.vue'
 import ScreenContainer from '@/components/layout/ScreenContainer.vue'
 import { useRemote } from '@/composables/useRemote'
 import { bigNum, hours, intNum, pct, usd } from '@/theme/format'
-import { color, priceBucketMeta } from '@/theme/steam-dark'
+import { barGradient, color, hbarGradient, priceBucketMeta } from '@/theme/steam-dark'
 
 const route = useRoute()
 const router = useRouter()
@@ -56,7 +56,7 @@ const trendOption = computed<ChartOption | null>(() => {
       { type: 'value', name: '%', min: 0, max: 100, splitLine: { show: false } },
     ],
     series: [
-      { name: '评论数', type: 'bar', data: d.map((x) => x.review_cnt), itemStyle: { color: 'rgba(102,192,244,0.6)' } },
+      { name: '评论数', type: 'bar', data: d.map((x) => x.review_cnt), itemStyle: { color: barGradient(), borderRadius: [6, 6, 2, 2] } },
       {
         name: '好评占比',
         type: 'line',
@@ -64,8 +64,8 @@ const trendOption = computed<ChartOption | null>(() => {
         smooth: true,
         symbol: 'none',
         data: d.map((x) => (x.positive_rate === null ? null : +(x.positive_rate * 100).toFixed(1))),
-        lineStyle: { color: color.positive },
-        itemStyle: { color: color.positive },
+        lineStyle: { color: '#ffffff', width: 2.5, shadowColor: 'rgba(212, 214, 255, 0.8)', shadowBlur: 10 },
+        itemStyle: { color: '#ffffff' },
       },
     ],
   }
@@ -79,7 +79,7 @@ const priceOption = computed<ChartOption | null>(() => {
     tooltip: { trigger: 'axis', valueFormatter: (v: number) => usd(v) },
     xAxis: { type: 'category', data: d.map((x) => x.date) },
     yAxis: { type: 'value', name: '美元', min: 0 },
-    series: [{ type: 'line', step: 'end', data: d.map((x) => x.price_usd), lineStyle: { color: color.warning }, itemStyle: { color: color.warning }, areaStyle: { color: 'rgba(232,163,61,0.12)' } }],
+    series: [{ type: 'line', step: 'end', data: d.map((x) => x.price_usd), lineStyle: { color: color.accentBright, width: 2.5 }, itemStyle: { color: color.accentBright }, areaStyle: { color: barGradient(color.accent, 0) } }],
   }
 })
 
@@ -110,8 +110,8 @@ const peerOption = computed<ChartOption | null>(() => {
         type: 'bar',
         barMaxWidth: 16,
         data: rows.map((r) => (r.self === null || !r.avg ? 0 : +(Number(r.self) / r.avg).toFixed(2))),
-        itemStyle: { color: color.accent },
-        markLine: { symbol: 'none', data: [{ xAxis: 1 }], lineStyle: { color: color.warning, type: 'dashed' }, label: { formatter: '同簇平均' } },
+        itemStyle: { color: hbarGradient(), borderRadius: [0, 10, 10, 0] },
+        markLine: { symbol: 'none', data: [{ xAxis: 1 }], lineStyle: { color: '#ffffff', type: 'dashed' }, label: { formatter: '同簇平均', color: color.text } },
       },
     ],
   }
@@ -133,7 +133,7 @@ const peerOption = computed<ChartOption | null>(() => {
       </div>
 
       <main v-else-if="g" class="grid">
-        <section class="info card">
+        <section class="info card glass">
           <img v-if="g.header_image" :src="g.header_image" :alt="g.name" class="cover" referrerpolicy="no-referrer" />
           <div class="meta">
             <div><span>发行</span>{{ g.release_date ?? '未发行' }}</div>
@@ -146,7 +146,7 @@ const peerOption = computed<ChartOption | null>(() => {
         </section>
 
         <section class="facts">
-          <div v-for="f in facts" :key="f.label" class="fact card">
+          <div v-for="f in facts" :key="f.label" class="fact card glass">
             <div class="label">{{ f.label }}</div>
             <div class="value">{{ f.value }}</div>
             <div class="unit">{{ f.unit }}</div>
@@ -154,12 +154,12 @@ const peerOption = computed<ChartOption | null>(() => {
         </section>
 
         <section class="models">
-          <div class="model card">
+          <div class="model card glass">
             <div class="label">聚类分群</div>
             <template v-if="g.cluster"><div class="value">{{ g.cluster.cluster_label }}</div><div class="unit">簇 #{{ g.cluster.cluster_id }}</div></template>
             <div v-else class="pending">尚未生成（聚类模型未运行，或评论数不足 10 条）</div>
           </div>
-          <div class="model card">
+          <div class="model card glass">
             <div class="label">热销预测</div>
             <template v-if="g.hot_pred">
               <div class="value">{{ pct(g.hot_pred.hot_prob) }}<small>{{ g.hot_pred.hot_pred ? ' 预测热销' : ' 预测非热销' }}</small></div>
@@ -167,7 +167,7 @@ const peerOption = computed<ChartOption | null>(() => {
             </template>
             <div v-else class="pending">尚未生成（热销预测模型未运行）</div>
           </div>
-          <div class="model card">
+          <div class="model card glass">
             <div class="label">评论情感</div>
             <template v-if="g.sentiment">
               <div class="value">{{ pct(g.sentiment.positive_ratio) }}<small> 正向</small></div>
@@ -249,15 +249,22 @@ const peerOption = computed<ChartOption | null>(() => {
     'price price peer';
 }
 .card {
-  position: relative;
   min-width: 0;
   min-height: 0;
-  background: linear-gradient(160deg, var(--glass-highlight), transparent 38%), var(--bg-panel);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
   padding: 18px 22px;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: card-in 0.8s var(--ease-out) backwards;
+}
+.card > * {
+  position: relative;
+  z-index: 2;
+}
+.facts .card:nth-child(n + 3),
+.models .card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.facts .card:nth-child(n + 5),
+.models .card:nth-child(3) {
+  animation-delay: 0.16s;
 }
 .info {
   grid-area: info;

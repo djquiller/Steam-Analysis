@@ -11,7 +11,7 @@ import Segmented from '@/components/layout/Segmented.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { intNum } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { sequential } from '@/theme/steam-dark'
 
 const { params } = storeToRefs(useFiltersStore())
 const binWidth = ref(5)
@@ -39,9 +39,9 @@ const option = computed<ChartOption | null>(() => {
       dimension: 0,
       min: 0,
       max: d.bins.length - 1,
-      inRange: { color: [color.negative, color.warning, color.positive] },
+      inRange: { color: sequential.slice(1) },
     },
-    series: [{ type: 'bar', barCategoryGap: '8%', data: d.bins.map((b, i) => [i, b.game_cnt]) }],
+    series: [{ type: 'bar', barCategoryGap: '14%', itemStyle: { borderRadius: [8, 8, 2, 2] }, data: d.bins.map((b, i) => [i, b.game_cnt]) }],
   }
 })
 </script>
