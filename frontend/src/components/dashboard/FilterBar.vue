@@ -1,16 +1,20 @@
 <script setup lang="ts">
 /**
- * 全局筛选条（年份 / 类型 / 价格区间多选），放在主区标题下方的一条磨砂胶囊里；切换标签页时保持不变。
- * 价格档位选中时胶囊背景平滑填充，按下有轻微回弹。
+ * 全局筛选（年份 / 类型 / 价格区间），以一排紧凑胶囊放在页标题右侧；切换标签页时保持不变。
+ * - 发行年份、价格：点胶囊弹出磨砂面板（PillPopover）在里面选；
+ * - 类型：胶囊本身就是下拉框，选项多，直接用原生下拉最快；
+ * - 有筛选值的胶囊会高亮，价格胶囊带已选档位数的角标。
  */
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
 import { metaApi } from '@/api'
 import type { PriceBucket } from '@/api/types'
+import PillPopover from '@/components/layout/PillPopover.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { intNum } from '@/theme/format'
+import { priceBucketMeta } from '@/theme/steam-dark'
 
 const filters = useFiltersStore()
 const { yearStart, yearEnd, genre, priceBuckets, active } = storeToRefs(filters)
@@ -24,6 +28,15 @@ const years = computed(() => {
   for (let i = y.max; i >= y.min; i--) out.push(i)
   return out
 })
+
+const yearText = computed(() =>
+  yearStart.value === null && yearEnd.value === null
+    ? '不限'
+    : `${yearStart.value ?? '不限'} — ${yearEnd.value ?? '不限'}`,
+)
+const priceText = computed(() =>
+  priceBuckets.value.length ? priceBuckets.value.map((k) => priceBucketMeta[k].label).join('、') : '不限',
+)
 
 function onYear(which: 'start' | 'end', e: Event) {
   const v = (e.target as HTMLSelectElement).value
@@ -41,23 +54,25 @@ const isOn = (k: PriceBucket) => priceBuckets.value.includes(k)
 
 <template>
   <div class="filters">
-    <span class="filters-title">全局筛选</span>
-    <label class="field">
-      <span>发行年份</span>
-      <select :value="yearStart ?? ''" @change="onYear('start', $event)">
-        <option value="">不限</option>
-        <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-      </select>
-      <em>—</em>
-      <select :value="yearEnd ?? ''" @change="onYear('end', $event)">
-        <option value="">不限</option>
-        <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-      </select>
-    </label>
+    <span v-if="meta.state.value === 'error'" class="warn">筛选项加载失败：{{ meta.error.value }}（自动重试中）</span>
 
-    <label class="field">
-      <span>类型</span>
-      <select class="genre" :value="genre ?? ''" @change="onGenre">
+    <PillPopover label="发行年份" :value="yearText" :active="yearStart !== null || yearEnd !== null">
+      <div class="years">
+        <select :value="yearStart ?? ''" @change="onYear('start', $event)">
+          <option value="">不限</option>
+          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+        </select>
+        <em>—</em>
+        <select :value="yearEnd ?? ''" @change="onYear('end', $event)">
+          <option value="">不限</option>
+          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+        </select>
+      </div>
+    </PillPopover>
+
+    <label class="pill genre" :class="{ active: !!genre }">
+      <span class="label">类型</span>
+      <select :value="genre ?? ''" @change="onGenre">
         <option value="">全部类型</option>
         <option v-for="g in meta.data.value?.genres ?? []" :key="g.genre" :value="g.genre">
           {{ g.genre }}（{{ intNum(g.game_cnt) }}）
@@ -65,22 +80,22 @@ const isOn = (k: PriceBucket) => priceBuckets.value.includes(k)
       </select>
     </label>
 
-    <div class="field">
-      <span>价格</span>
-      <button
-        v-for="b in meta.data.value?.price_buckets ?? []"
-        :key="b.key"
-        class="chip"
-        :class="{ on: isOn(b.key) }"
-        :title="`${intNum(b.game_cnt)} 款`"
-        @click="filters.togglePriceBucket(b.key)"
-      >
-        {{ b.label }}
-      </button>
-    </div>
+    <PillPopover label="价格" :value="priceText" :badge="priceBuckets.length" :active="priceBuckets.length > 0">
+      <div class="chips">
+        <button
+          v-for="b in meta.data.value?.price_buckets ?? []"
+          :key="b.key"
+          class="chip"
+          :class="{ on: isOn(b.key) }"
+          :title="`${intNum(b.game_cnt)} 款`"
+          @click="filters.togglePriceBucket(b.key)"
+        >
+          {{ b.label }}
+        </button>
+      </div>
+    </PillPopover>
 
     <button class="reset" :disabled="!active" @click="filters.reset()">重置筛选</button>
-    <span v-if="meta.state.value === 'error'" class="warn">筛选项加载失败：{{ meta.error.value }}（自动重试中）</span>
   </div>
 </template>
 
@@ -88,32 +103,42 @@ const isOn = (k: PriceBucket) => priceBuckets.value.includes(k)
 .filters {
   display: flex;
   align-items: center;
-  gap: 26px;
-  height: 60px;
-  padding: 0 10px 0 22px;
-  border-radius: 30px;
-  background: linear-gradient(110deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(18px);
+  gap: 12px;
 }
-.filters-title {
-  font-size: var(--fs-small);
-  color: var(--accent);
-  letter-spacing: 2px;
-}
-.field {
+
+/* 类型胶囊：外观与 PillPopover 的胶囊一致，里面是透明的原生下拉框 */
+.pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  height: 46px;
+  padding: 0 8px 0 18px;
+  border-radius: 23px;
+  color: var(--text-secondary);
   font-size: var(--fs-body);
+  white-space: nowrap;
+  cursor: pointer;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  transition:
+    border-color 0.35s var(--ease-out),
+    background 0.35s var(--ease-out);
 }
-.field > span {
-  color: var(--text-secondary);
+.pill:hover {
+  border-color: rgba(212, 214, 255, 0.35);
 }
-.field em {
-  font-style: normal;
-  color: var(--text-secondary);
+.pill.active {
+  border-color: rgba(212, 214, 255, 0.45);
+  background: linear-gradient(110deg, rgba(163, 167, 240, 0.26), rgba(163, 167, 240, 0.06));
 }
+.genre select {
+  width: 190px;
+  border: 0;
+  background-color: transparent;
+  text-overflow: ellipsis;
+}
+
 select {
   appearance: none;
   background:
@@ -133,29 +158,52 @@ select:focus {
   border-color: rgba(212, 214, 255, 0.35);
   outline: none;
 }
+.genre select:hover,
+.genre select:focus {
+  border-color: transparent;
+}
 select option {
   background: var(--bg-panel-solid);
 }
-select.genre {
-  width: 250px;
+
+/* 年份面板 */
+.years {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.years select {
+  width: 120px;
+}
+.years em {
+  font-style: normal;
+  color: var(--text-secondary);
+}
+
+/* 价格面板：五个档位竖排，选中时背景从中心铺开，按下有回弹 */
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 170px;
 }
 .chip {
   position: relative;
-  isolation: isolate; /* 让 ::before 的 z-index: -1 落在按钮自己的背景层，而不是整条筛选栏后面 */
+  isolation: isolate; /* 让 ::before 的 z-index: -1 落在按钮自己的背景层 */
   overflow: hidden;
+  text-align: left;
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 18px;
-  padding: 7px 15px;
-  font-size: var(--fs-small);
+  border-radius: 14px;
+  padding: 9px 16px;
+  font-size: var(--fs-body);
   cursor: pointer;
   transition:
     color 0.35s var(--ease-out),
     border-color 0.35s var(--ease-out),
     transform 0.35s var(--ease-spring);
 }
-/* 选中时背景从中心铺开 */
 .chip::before {
   content: '';
   position: absolute;
@@ -174,7 +222,7 @@ select.genre {
   border-color: rgba(212, 214, 255, 0.3);
 }
 .chip:active {
-  transform: scale(0.94);
+  transform: scale(0.96);
 }
 .chip.on {
   color: var(--text-strong);
@@ -184,16 +232,17 @@ select.genre {
   transform: none;
   opacity: 1;
 }
+
 .reset {
-  margin-left: auto;
-  height: 42px;
+  height: 46px;
   padding: 0 20px;
-  border-radius: 21px;
+  border-radius: 23px;
   color: var(--text-primary);
   background: linear-gradient(110deg, rgba(163, 167, 240, 0.3), rgba(163, 167, 240, 0.1));
   border: 1px solid rgba(212, 214, 255, 0.3);
   font-size: var(--fs-small);
   cursor: pointer;
+  white-space: nowrap;
   transition:
     opacity 0.35s var(--ease-out),
     transform 0.35s var(--ease-spring);

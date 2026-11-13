@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 大屏外壳：左侧可折叠导航 + 右侧主区（页标题、全局筛选、当前标签页的卡片）。
+ * 大屏外壳：左侧可折叠导航 + 右侧主区（标题行：左边页标题、右边筛选胶囊；下面是当前标签页的卡片）。
  * - 标签页是子路由（/overview、/market、/players、/hits），可以直接用链接打开某一页；
  * - 切页时标题和卡片用 CSS 动画依次落位（不依赖帧回调，见下方样式注释）；已打开过的页用 KeepAlive 缓存；
  * - 键盘 ← → / 1–4 切换标签页；
@@ -74,9 +74,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <h1 :key="current.name" class="title">
             {{ current.label }}<span>{{ current.hint }}</span>
           </h1>
+          <FilterBar class="filter-bar" />
         </header>
-
-        <FilterBar class="filter-bar" />
 
         <main class="content">
           <RouterView v-slot="{ Component }">
@@ -105,12 +104,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   padding: 26px 36px 30px 32px;
 }
 
+/* 标题行压在卡片之上（z-index），筛选胶囊的弹出面板才能盖住下面的卡片 */
 .head {
+  position: relative;
+  z-index: 20;
   height: 80px;
   flex: none;
   display: flex;
   align-items: center;
   gap: 22px;
+  margin-bottom: 22px;
 }
 
 /* 页标题：标签名白色 + 说明薰衣草色，切页时重新挂载并播放入场动画 */
@@ -152,11 +155,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 }
 
 .filter-bar {
+  margin-left: auto;
   flex: none;
-  margin: 10px 0 22px;
-  align-self: flex-start;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .content {
