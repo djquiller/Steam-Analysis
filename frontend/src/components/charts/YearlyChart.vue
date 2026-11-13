@@ -61,7 +61,7 @@ const option = computed<ChartOption | null>(() => {
 </script>
 
 <template>
-  <Panel title="历年发行量与均价" note="发行量（款）· 均价（美元，含免费游戏）">
+  <Panel title="历年发行量与均价">
     <BaseChart
       :option="option"
       :state="r.state.value"

@@ -47,7 +47,7 @@ const option = computed<ChartOption | null>(() => {
 </script>
 
 <template>
-  <Panel title="好评率分布" :note="`游戏数（款）· 仅评论数 ≥ 10 的 ${intNum(r.data.value?.game_cnt)} 款`">
+  <Panel title="好评率分布">
     <template #actions>
       <Segmented v-model="binWidth" :options="[{ value: 5, label: '5%' }, { value: 10, label: '10%' }]" />
     </template>

@@ -177,13 +177,13 @@ const peerOption = computed<ChartOption | null>(() => {
           </div>
         </section>
 
-        <Panel class="p-trend" title="评论月度走势" note="评论数（条）· 好评占比（%）· 月份（UTC）">
+        <Panel class="p-trend" title="评论月度走势">
           <BaseChart :option="trendOption" :state="trend.state.value" :error="trend.error.value" :empty="!!trend.data.value && !trend.data.value.length" empty-text="评论月度聚合尚未生成" @retry="trend.reload" />
         </Panel>
-        <Panel class="p-price" title="价格历史" note="价格（美元）· 每日采集">
+        <Panel class="p-price" title="价格历史">
           <BaseChart :option="priceOption" :state="prices.state.value" :error="prices.error.value" :empty="!!prices.data.value && !prices.data.value.length" empty-text="价格快照尚未开始采集" @retry="prices.reload" />
         </Panel>
-        <Panel class="p-peer" title="同类对比" :note="g.peers ? `与同簇「${g.peers.cluster_label}」${intNum(g.peers.game_cnt)} 款游戏的平均值相比（倍数）` : '与同一聚类的游戏平均值相比'">
+        <Panel class="p-peer" title="同类对比">
           <BaseChart :option="peerOption" state="ready" :empty="!g.peers" empty-text="聚类结果尚未生成，暂无同类对比" />
         </Panel>
       </main>

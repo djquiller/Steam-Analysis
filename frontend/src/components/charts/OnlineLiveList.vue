@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import { rankApi } from '@/api'
 import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
-import { dateTime, intNum } from '@/theme/format'
+import { intNum } from '@/theme/format'
 
 const router = useRouter()
 const r = useRemote((s) => rankApi.onlineLive(20, s), [], { pollMs: 60_000 })
@@ -25,7 +25,7 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <Panel title="实时在线榜" :note="`在线人数（人）· 每小时采集 · 每 60 秒刷新 · ${dateTime(r.data.value?.snapshot_at)}`">
+  <Panel title="实时在线榜">
     <div v-if="items.length" class="list" :class="{ scroll: items.length >= SCROLL_MIN }">
       <div class="track">
         <div v-for="(it, i) in rows" :key="i" class="row" @click="router.push(`/game/${it.appid}`)">

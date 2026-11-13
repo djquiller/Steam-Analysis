@@ -1,11 +1,11 @@
 <script setup lang="ts">
-/** 4 个 KPI 卡：数字从旧值滚动到新值（翻牌效果）；还没有的指标显示"—"并注明原因 */
+/** 4 个 KPI 卡：数字从旧值滚动到新值（翻牌效果）；还没有的指标显示"—" */
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { overviewApi } from '@/api'
 import type { Kpi } from '@/api/types'
 import { useRemote } from '@/composables/useRemote'
-import { bigNum, dateTime, intNum } from '@/theme/format'
+import { bigNum, intNum } from '@/theme/format'
 
 const kpi = useRemote((s) => overviewApi.kpi(s), [], { pollMs: 5 * 60_000 })
 const k = computed<Kpi | null>(() => {
@@ -18,26 +18,13 @@ interface Card {
   label: string
   unit: string
   fmt: (v: number) => string
-  note: (k: Kpi) => string
 }
 
 const cards: Card[] = [
-  { key: 'game_cnt', label: '游戏总数', unit: '款', fmt: intNum, note: () => '有发行年份的 Steam 游戏' },
-  { key: 'review_cnt', label: '评论总数', unit: '条', fmt: bigNum, note: () => '评论元数据全量入库' },
-  {
-    key: 'owners_total',
-    label: '估算玩家总量',
-    unit: '份',
-    fmt: bigNum,
-    note: () => 'SteamSpy 区间中值之和，同一玩家多款重复计',
-  },
-  {
-    key: 'online_peak_24h',
-    label: '实时在线峰值',
-    unit: '人',
-    fmt: intNum,
-    note: (k) => (k.online_peak_at ? `近 24 小时，峰值于 ${dateTime(k.online_peak_at)}` : '近 24 小时，采集名单内游戏合计'),
-  },
+  { key: 'game_cnt', label: '游戏总数', unit: '款', fmt: intNum },
+  { key: 'review_cnt', label: '评论总数', unit: '条', fmt: bigNum },
+  { key: 'owners_total', label: '估算玩家总量', unit: '份', fmt: bigNum },
+  { key: 'online_peak_24h', label: '实时在线峰值', unit: '人', fmt: intNum },
 ]
 
 // 数字滚动：每张卡独立插值
@@ -82,11 +69,6 @@ function display(c: Card): string {
       <div class="value">
         <span class="num">{{ k ? display(c) : kpi.state.value === 'loading' ? '…' : '—' }}</span>
         <span class="unit">{{ c.unit }}</span>
-      </div>
-      <div class="note">
-        <template v-if="kpi.state.value === 'error' && !k">KPI 加载失败：{{ kpi.error.value }}</template>
-        <template v-else-if="k && k[c.key] === null">尚未生成（{{ c.key === 'review_cnt' ? '评论侧聚合未运行' : '在线快照聚合未运行' }}）</template>
-        <template v-else-if="k">{{ c.note(k) }}</template>
       </div>
     </div>
   </div>
@@ -146,13 +128,5 @@ function display(c: Card): string {
 .unit {
   font-size: 22px;
   color: var(--accent);
-}
-.note {
-  position: relative;
-  font-size: var(--fs-small);
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>

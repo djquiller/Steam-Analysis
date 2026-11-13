@@ -89,7 +89,7 @@ function onClick(p: { name?: string }) {
 </script>
 
 <template>
-  <Panel title="类型热度" note="面积：游戏数（款，多类型各计一次）· 颜色：好评占比 · 点击联动筛选">
+  <Panel title="类型热度">
     <template #actions>
       <span v-if="genre" class="tag" @click="store.toggleGenre(genre)">{{ genre }} ✕</span>
     </template>

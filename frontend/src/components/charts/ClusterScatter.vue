@@ -49,10 +49,7 @@ function onClick(p: { data?: unknown }) {
 </script>
 
 <template>
-  <Panel
-    title="游戏聚类分群"
-    :note="`PCA 二维投影（无单位）· 仅评论数 ≥ 10 的游戏${r.data.value?.total ? ` · 共 ${intNum(r.data.value.total)} 款，显示 ${intNum(r.data.value.points.length)} 个点` : ''}`"
-  >
+  <Panel title="游戏聚类分群">
     <BaseChart
       :option="option"
       :state="r.state.value"

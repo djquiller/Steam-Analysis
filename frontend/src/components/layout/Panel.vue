@@ -1,5 +1,8 @@
 <script setup lang="ts">
-/** 看板卡片：磨砂玻璃 + 流光描边（公共样式 .glass，见 tokens.css）+ 标题 + 单位与口径说明 + 右上角操作区 + 图表区 */
+/**
+ * 看板卡片：磨砂玻璃 + 流光描边（公共样式 .glass，见 tokens.css）+ 标题 + 右上角操作区 + 图表区。
+ * note（单位与口径说明）是可选的：不传就不显示。说明文字由成员按需手动添加，不自动生成。
+ */
 defineProps<{ title: string; note?: string }>()
 </script>
 

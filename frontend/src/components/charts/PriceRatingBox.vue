@@ -45,7 +45,7 @@ const option = computed<ChartOption | null>(() => {
 </script>
 
 <template>
-  <Panel title="价格区间 × 好评率" note="好评率（%，1% 分箱推算五数）· 仅评论数 ≥ 10 的游戏">
+  <Panel title="价格区间 × 好评率">
     <BaseChart
       :option="option"
       :state="r.state.value"

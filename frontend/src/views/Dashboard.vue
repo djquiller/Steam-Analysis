@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
  * 大屏外壳：左侧可折叠导航 + 右侧主区（标题行：左边页标题、右边筛选胶囊；下面是当前标签页的卡片）。
+ * 页标题就是当前标签页的名称，与侧栏高亮项一致。
  * - 标签页是子路由（/overview、/market、/players、/hits），可以直接用链接打开某一页；
  * - 切页时标题和卡片用 CSS 动画依次落位（不依赖帧回调，见下方样式注释）；已打开过的页用 KeepAlive 缓存；
  * - 键盘 ← → / 1–4 切换标签页；
@@ -71,9 +72,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
       <section class="main">
         <header class="head">
-          <h1 :key="current.name" class="title" :title="`${current.label} · ${current.hint}`">
-            {{ current.label }}<span>{{ current.hint }}</span>
-          </h1>
+          <h1 :key="current.name" class="title">{{ current.label }}</h1>
           <FilterBar class="filter-bar" />
         </header>
 
@@ -116,8 +115,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   margin-bottom: 22px;
 }
 
-/* 页标题：标签名白色 + 说明薰衣草色，切页时重新挂载并播放入场动画。
-   空间不够时（1920 宽、侧栏展开、筛选值较长）由标题让位：说明部分末尾截成"…"，不压到右侧筛选胶囊。 */
+/* 页标题：当前标签页名称，切页时重新挂载并播放入场动画；空间不够时末尾截成"…"，不压到右侧筛选胶囊。 */
 .title {
   flex: 0 1 auto;
   min-width: 0;
@@ -131,31 +129,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   white-space: nowrap;
   animation: title-in 0.7s var(--ease-out) backwards;
 }
-.title span {
-  margin-left: 18px;
-  color: var(--accent);
-  background: linear-gradient(100deg, var(--accent) 20%, var(--accent-bright) 50%, var(--accent) 80%);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  /* 流光：一道亮光缓慢扫过说明文字 */
-  animation: text-sheen 6s ease-in-out infinite;
-}
 @keyframes title-in {
   from {
     opacity: 0;
     transform: translateY(10px);
     filter: blur(8px);
-  }
-}
-@keyframes text-sheen {
-  0%,
-  100% {
-    background-position: 100% 0;
-  }
-  50% {
-    background-position: 0% 0;
   }
 }
 

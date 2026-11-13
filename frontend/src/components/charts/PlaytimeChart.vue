@@ -46,7 +46,7 @@ const option = computed<ChartOption | null>(() => {
 </script>
 
 <template>
-  <Panel title="游玩时长分布" note="写评论时的累计游玩时长（小时，对数分箱）· 评论数（条）">
+  <Panel title="游玩时长分布">
     <BaseChart
       :option="option"
       :state="r.state.value"

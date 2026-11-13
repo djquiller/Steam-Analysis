@@ -51,7 +51,7 @@ const option = computed<ChartOption | null>(() => {
 </script>
 
 <template>
-  <Panel title="评论语言分布" note="评论数（条）· 标签为占比 · 按所评游戏的发行年份筛选">
+  <Panel title="评论语言分布">
     <BaseChart
       :option="option"
       :state="r.state.value"

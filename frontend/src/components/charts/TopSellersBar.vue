@@ -28,10 +28,6 @@ const METRICS: { value: TopMetric; label: string }[] = [
   { value: 'ccu', label: '在线人数' },
 ]
 
-const NOTE: Record<TopMetric, string> = {
-  owners: '拥有者（份，SteamSpy 区间估算中值）· 点击查看详情',
-  ccu: '最新在线人数（人，每小时采集）· 点击查看详情',
-}
 
 const option = computed<ChartOption | null>(() => {
   const d = r.data.value
@@ -88,7 +84,7 @@ function onClick(p: { dataIndex?: number }) {
 </script>
 
 <template>
-  <Panel title="热销 Top10" :note="NOTE[metric]">
+  <Panel title="热销 Top10">
     <template #actions>
       <Segmented v-model="metric" :options="METRICS" />
     </template>

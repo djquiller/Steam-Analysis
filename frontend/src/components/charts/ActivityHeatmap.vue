@@ -53,7 +53,7 @@ const option = computed<ChartOption | null>(() => {
 </script>
 
 <template>
-  <Panel title="评论活跃时段" note="星期 × 小时 · 时间（UTC）· 评论数（条）">
+  <Panel title="评论活跃时段">
     <BaseChart
       :option="option"
       :state="r.state.value"
