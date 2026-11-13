@@ -44,6 +44,7 @@
 | `analysis/build_dwd_game.py` | `ods_game_kaggle` → `dwd_game` + `dwd_game_genre`（全量重建） | `python -m analysis.build_dwd_game` |
 | `analysis/build_dwd_review.py` | `ods_review_kaggle` → `dwd_review`（按分片，`INSERT … SELECT`） | `python -m analysis.build_dwd_review --shards 0-12` |
 | `analysis/build_ads_game.py` | `dwd_game` + `dwd_game_genre` → 只依赖游戏表的 `ads` 表：`ads_yearly_release`、`ads_genre_heat`、`ads_rating_dist`、`ads_top_sellers`（拥有者口径），并更新 `ads_kpi_overview` 的游戏侧两列和 `ads_meta`。全量重建，单事务，提交前自动核对总数。依赖评论表、在线快照、模型的 `ads` 表不在此脚本内 | `python -m analysis.build_ads_game` |
+| `analysis/build_ads_ccu.py` | `dwd_ccu_snapshot` → 在线人数相关的 `ads`：整表重写 `ads_ccu_latest`（最新一轮 Top 100，带上一轮人数）；更新 `ads_top_sellers` 的 `ccu_latest` / `ccu_at`；更新 `ads_kpi_overview` 的 24 小时在线峰值；登记 `ads_meta.ccu_updated_at`。"最新一轮"只取完整轮次（行数 ≥ 名单的 90%），峰值窗口以最新一轮为终点往前 24 小时。单事务，提交前核对行数。由定时进程每小时自动调用，约 0.1 秒 | `python -m analysis.build_ads_ccu` |
 
 **实测（2026-11-12 全量）**
 
@@ -62,5 +63,5 @@
 - [ ] 聚类最终 K 值与各簇业务含义（方法已定，数值待全量数据）
 - [x] 各脚本入口与运行命令（见上节）
 - [x] 游戏与评论全量清洗到 `dwd`（2026-11-12 完成，数字见上节）
-- [ ] 生成 `ads` 聚合表（游戏侧已写好，在单独分支上等 Review；评论侧未开始）
+- [ ] 生成 `ads` 聚合表（游戏侧、在线人数侧已写好，在单独分支上等 Review；评论侧未开始）
 - [ ] 数据质量报告 `analysis/reports/data_quality.md`
