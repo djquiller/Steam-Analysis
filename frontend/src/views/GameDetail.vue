@@ -34,11 +34,12 @@ const facts = computed(() => {
   const x = g.value
   if (!x) return []
   return [
-    { label: '拥有者', value: x.owners_mid === null ? '—' : `${bigNum(x.owners_low)}–${bigNum(x.owners_high)}`, unit: '份（SteamSpy 区间）' },
+    // unit 紧跟在数字后面；好评率的 % 和游玩时长的"小时"已经在数值里，不再单列
+    { label: '拥有者', value: x.owners_mid === null ? '—' : `${bigNum(x.owners_low)}–${bigNum(x.owners_high)}`, unit: '份' },
     { label: '历史峰值在线', value: intNum(x.peak_ccu), unit: '人' },
-    { label: '评论数', value: bigNum(x.review_cnt), unit: '条（Steam 官方好评 + 差评）' },
-    { label: '好评率', value: pct(x.positive_rate), unit: x.review_cnt < 10 ? '评论少于 10 条，不计' : '' },
-    { label: '平均游玩', value: hours(x.avg_playtime_min), unit: `中位 ${hours(x.median_playtime_min)}` },
+    { label: '评论数', value: bigNum(x.review_cnt), unit: '条' },
+    { label: '好评率', value: pct(x.positive_rate), unit: '' },
+    { label: '平均游玩', value: hours(x.avg_playtime_min), unit: '' },
     { label: 'Metacritic', value: x.metacritic_score === null ? '—' : String(x.metacritic_score), unit: '分' },
   ]
 })
@@ -148,8 +149,9 @@ const peerOption = computed<ChartOption | null>(() => {
         <section class="facts">
           <div v-for="f in facts" :key="f.label" class="fact card glass">
             <div class="label">{{ f.label }}</div>
-            <div class="value">{{ f.value }}</div>
-            <div class="unit">{{ f.unit }}</div>
+            <div class="value">
+              {{ f.value }}<span v-if="f.unit" class="fact-unit">{{ f.unit }}</span>
+            </div>
           </div>
         </section>
 
@@ -341,6 +343,16 @@ const peerOption = computed<ChartOption | null>(() => {
 }
 .model .value {
   font-size: 34px;
+}
+.fact .value {
+  white-space: nowrap;
+}
+/* 指标卡的单位跟在数字后面，和 KPI 卡一样 */
+.fact-unit {
+  margin-left: 8px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--accent);
 }
 .value small {
   font-size: 16px;
