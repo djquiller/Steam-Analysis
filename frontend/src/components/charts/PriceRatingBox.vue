@@ -19,7 +19,7 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 40, right: 16, top: 16, bottom: 24 },
+    grid: { left: 8, right: 16, top: 30, bottom: 8, containLabel: true },
     tooltip: {
       formatter: (p: any) => {
         const it = d[p.dataIndex]

@@ -12,15 +12,21 @@ import type { TopMetric } from '@/api/types'
 import type { ChartOption } from '@/charts/echarts'
 import BaseChart from '@/components/charts/BaseChart.vue'
 import Panel from '@/components/layout/Panel.vue'
+import Segmented from '@/components/layout/Segmented.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, dateTime, intNum, pct, usd } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { color, font } from '@/theme/steam-dark'
 
 const router = useRouter()
 const { params } = storeToRefs(useFiltersStore())
 const metric = ref<TopMetric>('owners')
 const r = useRemote((s) => rankApi.topSellers({ ...params.value, metric: metric.value, limit: 10 }, s), [params, metric])
+
+const METRICS: { value: TopMetric; label: string }[] = [
+  { value: 'owners', label: '拥有者' },
+  { value: 'ccu', label: '在线人数' },
+]
 
 const NOTE: Record<TopMetric, string> = {
   owners: '拥有者（份，SteamSpy 区间估算中值）· 点击查看详情',
@@ -32,7 +38,7 @@ const option = computed<ChartOption | null>(() => {
   if (!d) return null
   const val = (x: (typeof d)[number]) => (metric.value === 'owners' ? x.owners_mid : x.ccu_latest) ?? 0
   return {
-    grid: { left: 8, right: 70, top: 6, bottom: 6, containLabel: true },
+    grid: { left: 8, right: 90, top: 10, bottom: 10, containLabel: true },
     tooltip: {
       formatter: (p: any) => {
         const it = d[p.dataIndex]
@@ -45,7 +51,7 @@ const option = computed<ChartOption | null>(() => {
       type: 'category',
       inverse: true,
       data: d.map((x) => x.name),
-      axisLabel: { color: color.text, fontSize: 12, width: 170, overflow: 'truncate' },
+      axisLabel: { color: color.text, fontSize: font.label, width: 300, overflow: 'truncate' },
       animationDuration: 300,
       animationDurationUpdate: 300,
     },
@@ -55,14 +61,14 @@ const option = computed<ChartOption | null>(() => {
         realtimeSort: true,
         data: d.map((x, i) => ({
           value: val(x),
-          itemStyle: { color: i < 3 ? color.accent : 'rgba(102,192,244,0.55)', borderRadius: [0, 3, 3, 0] },
+          itemStyle: { color: i < 3 ? color.accent : 'rgba(102,192,244,0.55)', borderRadius: [0, 6, 6, 0] },
         })),
-        barMaxWidth: 18,
+        barMaxWidth: 36,
         label: {
           show: true,
           position: 'right',
           color: color.text,
-          fontSize: 12,
+          fontSize: font.label,
           formatter: (p: any) => bigNum(p.value),
         },
         cursor: 'pointer',
@@ -84,8 +90,7 @@ function onClick(p: { dataIndex?: number }) {
 <template>
   <Panel title="热销 Top10" :note="NOTE[metric]">
     <template #actions>
-      <button class="seg" :class="{ on: metric === 'owners' }" @click="metric = 'owners'">拥有者</button>
-      <button class="seg" :class="{ on: metric === 'ccu' }" @click="metric = 'ccu'">在线人数</button>
+      <Segmented v-model="metric" :options="METRICS" />
     </template>
     <BaseChart
       :option="option"
@@ -100,19 +105,3 @@ function onClick(p: { dataIndex?: number }) {
   </Panel>
 </template>
 
-<style scoped>
-.seg {
-  background: transparent;
-  border: 1px solid var(--bg-raised);
-  color: var(--text-secondary);
-  font-size: 12px;
-  padding: 1px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-.seg.on {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-</style>

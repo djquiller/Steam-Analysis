@@ -193,33 +193,35 @@ const peerOption = computed<ChartOption | null>(() => {
 
 <style scoped>
 .detail {
-  height: 1080px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 0 24px 20px;
+  padding: 0 32px 28px;
 }
 .top {
-  height: 72px;
+  height: 88px;
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 20px;
-  border-bottom: 1px solid rgba(102, 192, 244, 0.18);
+  gap: 24px;
 }
 .top h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: 32px;
+  letter-spacing: 1px;
   color: var(--text-strong);
 }
 .appid {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .back {
   background: var(--accent-dim);
   border: 1px solid var(--accent);
   color: var(--accent);
-  border-radius: 4px;
-  padding: 5px 14px;
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .fatal {
@@ -228,17 +230,18 @@ const peerOption = computed<ChartOption | null>(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 16px;
   color: var(--negative);
-  font-size: 18px;
+  font-size: 20px;
 }
 .grid {
   flex: 1;
   min-height: 0;
-  margin-top: 16px;
   display: grid;
   gap: var(--gap);
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 250px 130px 1fr 1fr;
+  /* 上两行按内容定高（大字号下也放得下），下面两行图表平分剩余高度 */
+  grid-template-rows: 300px 150px minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     'info info facts'
     'models models models'
@@ -246,54 +249,65 @@ const peerOption = computed<ChartOption | null>(() => {
     'price price peer';
 }
 .card {
-  background: var(--bg-panel);
-  border: 1px solid rgba(102, 192, 244, 0.14);
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: linear-gradient(160deg, var(--glass-highlight), transparent 38%), var(--bg-panel);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  padding: 14px 18px;
+  padding: 18px 22px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .info {
   grid-area: info;
   display: flex;
-  gap: 22px;
+  gap: 28px;
 }
 .cover {
   height: 100%;
   aspect-ratio: 460 / 215;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 10px;
+  flex: none;
 }
 .meta {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  font-size: 14px;
+  font-size: 17px;
+  min-width: 0;
 }
 .meta span {
   display: inline-block;
-  width: 96px;
+  width: 120px;
   color: var(--text-secondary);
 }
 .bucket {
   font-style: normal;
-  margin-left: 10px;
-  font-size: 12px;
+  margin-left: 12px;
+  font-size: var(--fs-small);
 }
 .tag {
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-small);
   border: 1px solid var(--bg-raised);
-  border-radius: 10px;
-  padding: 0 8px;
-  margin-right: 6px;
+  border-radius: 12px;
+  padding: 1px 10px;
+  margin-right: 8px;
 }
 .facts {
   grid-area: facts;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 .fact {
-  padding: 8px 14px;
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .models {
   grid-area: models;
@@ -301,29 +315,42 @@ const peerOption = computed<ChartOption | null>(() => {
   grid-template-columns: repeat(3, 1fr);
   gap: var(--gap);
 }
+.model {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
 .label {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-secondary);
 }
 .value {
   font-family: var(--font-number);
-  font-size: 26px;
+  font-size: 28px;
+  line-height: 1.2;
   color: var(--text-strong);
   font-weight: 700;
 }
+.model .value {
+  font-size: 34px;
+}
 .value small {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--accent);
   font-weight: 400;
 }
 .unit {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .pending {
-  margin-top: 14px;
+  margin-top: 8px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--fs-body);
 }
 .p-trend {
   grid-area: trend;

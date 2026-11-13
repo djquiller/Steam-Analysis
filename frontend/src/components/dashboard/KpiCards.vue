@@ -101,47 +101,54 @@ function display(c: Card): string {
 }
 .card {
   position: relative;
-  background: linear-gradient(135deg, rgba(102, 192, 244, 0.14), rgba(27, 40, 56, 0.85) 60%);
-  border: 1px solid rgba(102, 192, 244, 0.22);
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(102, 192, 244, 0.22), transparent 60%),
+    var(--bg-panel);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  padding: 10px 18px;
+  padding: 22px 28px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   overflow: hidden;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .card::after {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--accent);
+  left: 28px;
+  top: -1px;
+  width: 90px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 .label {
-  font-size: 14px;
+  font-size: 20px;
   color: var(--text-secondary);
+  letter-spacing: 1px;
 }
 .value {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 10px;
 }
 .num {
   font-family: var(--font-number);
-  font-size: 38px;
+  font-size: var(--fs-kpi);
   font-weight: 700;
+  line-height: 1.1;
   color: var(--text-strong);
   letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(102, 192, 244, 0.35);
+  text-shadow: 0 0 18px rgba(102, 192, 244, 0.45);
 }
 .unit {
-  font-size: 14px;
+  font-size: 22px;
   color: var(--accent);
 }
 .note {
-  font-size: 11px;
+  font-size: var(--fs-small);
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;

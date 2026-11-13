@@ -7,6 +7,7 @@ import { ecosystemApi } from '@/api'
 import type { ChartOption } from '@/charts/echarts'
 import BaseChart from '@/components/charts/BaseChart.vue'
 import Panel from '@/components/layout/Panel.vue'
+import Segmented from '@/components/layout/Segmented.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { intNum } from '@/theme/format'
@@ -20,7 +21,7 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 44, right: 10, top: 14, bottom: 22 },
+    grid: { left: 8, right: 16, top: 30, bottom: 8, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -48,9 +49,7 @@ const option = computed<ChartOption | null>(() => {
 <template>
   <Panel title="好评率分布" :note="`游戏数（款）· 仅评论数 ≥ 10 的 ${intNum(r.data.value?.game_cnt)} 款`">
     <template #actions>
-      <button v-for="w in [5, 10]" :key="w" class="seg" :class="{ on: binWidth === w }" @click="binWidth = w">
-        {{ w }}%
-      </button>
+      <Segmented v-model="binWidth" :options="[{ value: 5, label: '5%' }, { value: 10, label: '10%' }]" />
     </template>
     <BaseChart
       :option="option"
@@ -63,18 +62,3 @@ const option = computed<ChartOption | null>(() => {
   </Panel>
 </template>
 
-<style scoped>
-.seg {
-  background: transparent;
-  border: 1px solid var(--bg-raised);
-  color: var(--text-secondary);
-  font-size: 11px;
-  padding: 0 8px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-.seg.on {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-</style>

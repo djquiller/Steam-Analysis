@@ -19,8 +19,8 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 52, right: 44, top: 30, bottom: 24 },
-    legend: { top: 0, right: 0, data: ['发行量', '均价'] },
+    grid: { left: 8, right: 8, top: 56, bottom: 8, containLabel: true },
+    legend: { top: 0, left: 'center', data: ['发行量', '均价'] },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -41,7 +41,7 @@ const option = computed<ChartOption | null>(() => {
         name: '发行量',
         type: 'bar',
         data: d.map((x) => x.game_cnt),
-        barMaxWidth: 14,
+        barMaxWidth: 26,
         itemStyle: {
           borderRadius: [2, 2, 0, 0],
           color: {
@@ -57,7 +57,7 @@ const option = computed<ChartOption | null>(() => {
         smooth: true,
         symbol: 'none',
         data: d.map((x) => x.avg_price_usd),
-        lineStyle: { color: color.warning, width: 2 },
+        lineStyle: { color: color.warning, width: 3, shadowColor: 'rgba(232,163,61,0.5)', shadowBlur: 10 },
         itemStyle: { color: color.warning },
       },
     ],

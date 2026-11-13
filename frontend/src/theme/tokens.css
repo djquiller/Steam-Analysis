@@ -1,23 +1,36 @@
-/* Steam 深色科技蓝主题的 CSS 变量（与 frontend/CLAUDE.md "视觉 token" 一致）。
-   ECharts 用的同一套颜色在 steam-dark.ts 里，两边改色要一起改。 */
+/* 大屏的 CSS 变量（frontend/CLAUDE.md "视觉 token"）。
+   ECharts 用的同一套颜色与字号在 steam-dark.ts 里，两边改要一起改。
+   风格：深青黑底 + 半透明毛玻璃卡片 + Steam 蓝强调；字号按 3–5 米外观看放大。 */
 :root {
-  --bg-base: #171a21;
-  --bg-panel: #1b2838;
+  --bg-base: #0b1218;
+  --bg-panel: rgba(20, 34, 46, 0.62);
+  --bg-panel-solid: #122230;
   --bg-raised: #2a475e;
+  --glass-border: rgba(102, 192, 244, 0.18);
+  --glass-highlight: rgba(255, 255, 255, 0.06);
   --accent: #66c0f4;
   --accent-dim: rgba(102, 192, 244, 0.16);
-  --text-primary: #c7d5e0;
-  --text-secondary: #8f98a0;
+  --accent-glow: rgba(102, 192, 244, 0.45);
+  --text-primary: #d3dee7;
+  --text-secondary: #8fa3b3;
   --text-strong: #ffffff;
   --positive: #a4d007;
   --negative: #c35c2c;
   --warning: #e8a33d;
+  --magenta: #e05ea8;
 
-  --font-body: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
-  --font-number: 'DIN Alternate', 'Bahnschrift', 'Segoe UI', 'Roboto Mono', monospace;
+  /* 字体文件随前端打包（src/theme/fonts.ts），不使用系统字体；与 FONT_FAMILY 保持一致 */
+  --font-body: 'Inter', 'Noto Sans SC', sans-serif;
+  --font-number: 'Inter', 'Noto Sans SC', sans-serif;
 
-  --radius: 6px;
-  --gap: 14px;
+  /* 字号阶梯（1920×1080 设计稿像素） */
+  --fs-small: 14px;
+  --fs-body: 16px;
+  --fs-title: 22px;
+  --fs-kpi: 64px;
+
+  --radius: 16px;
+  --gap: 20px;
 }
 
 * {
@@ -33,12 +46,19 @@ body,
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--fs-body);
   overflow: hidden;
 }
 
-button {
+button,
+select,
+input {
   font-family: inherit;
+}
+
+/* 数字用等宽数字，翻牌和榜单滚动时不左右跳动 */
+body {
+  font-feature-settings: 'tnum' 1;
 }
 
 a {

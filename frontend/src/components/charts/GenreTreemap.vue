@@ -14,7 +14,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, intNum, pct } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { color, font } from '@/theme/steam-dark'
 
 const store = useFiltersStore()
 const { params, genre } = storeToRefs(store)
@@ -34,13 +34,6 @@ const option = computed<ChartOption | null>(() => {
         return `<b>${it.genre}</b><br/>游戏数：${intNum(it.game_cnt)} 款<br/>拥有者合计：${bigNum(it.owners_sum)} 份<br/>好评占比：${pct(it.positive_rate)}（${bigNum(it.review_cnt)} 条评论）<br/><span style="color:${color.accent}">点击${genre.value === it.genre ? '取消' : '按此类型'}筛选</span>`
       },
     },
-    visualMap: {
-      show: false,
-      min: Math.min(...rates),
-      max: Math.max(...rates),
-      dimension: 1,
-      inRange: { color: ['#2a475e', '#3d6f91', '#66c0f4'] },
-    },
     series: [
       {
         type: 'treemap',
@@ -50,9 +43,30 @@ const option = computed<ChartOption | null>(() => {
         width: '100%',
         height: '100%',
         top: 4,
-        label: { show: true, formatter: '{b}', fontSize: 12, color: '#fff' },
+        // 颜色按第 2 维（好评占比）映射：越亮好评越高。
+        // treemap 的颜色映射要写在 levels 里才生效，写在 series 顶层会被当成分类色板
+        levels: [
+          {
+            visualDimension: 1,
+            visualMin: Math.min(...rates),
+            visualMax: Math.max(...rates),
+            // 最亮只到主强调色，保证白字标签看得清
+            color: ['#13304a', '#1b5a80', '#2a85b8', '#66c0f4'],
+            colorMappingBy: 'value',
+          },
+        ],
+        label: {
+          show: true,
+          fontSize: font.label,
+          color: '#fff',
+          formatter: (p: any) => `{name|${p.name}}\n{num|${intNum(p.value[0])} 款}`,
+          rich: {
+            name: { fontSize: font.strong, fontWeight: 600, color: '#fff', lineHeight: 26 },
+            num: { fontSize: font.small, color: 'rgba(255,255,255,0.75)' },
+          },
+        },
         upperLabel: { show: false },
-        itemStyle: { borderColor: color.bgPanel, borderWidth: 2, gapWidth: 2 },
+        itemStyle: { borderColor: color.bgPanel, borderWidth: 3, gapWidth: 3, borderRadius: 6 },
         data: d.map((x) => ({
           name: x.genre,
           value: [x.game_cnt, x.positive_rate ?? 0],

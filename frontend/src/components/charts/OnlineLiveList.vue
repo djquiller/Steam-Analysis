@@ -69,11 +69,12 @@ const rows = computed(() => {
 }
 .row {
   display: grid;
-  grid-template-columns: 28px 1fr 90px 70px;
+  grid-template-columns: 44px 1fr 130px 100px;
   align-items: center;
-  height: 30px;
-  padding: 0 6px;
-  font-size: 13px;
+  height: 52px;
+  padding: 0 10px;
+  font-size: 18px;
+  border-radius: 8px;
   border-bottom: 1px dashed rgba(102, 192, 244, 0.1);
   cursor: pointer;
 }
@@ -96,11 +97,12 @@ const rows = computed(() => {
 .count {
   text-align: right;
   font-family: var(--font-number);
+  font-size: 20px;
   color: var(--text-strong);
 }
 .delta {
   text-align: right;
-  font-size: 12px;
+  font-size: var(--fs-small);
   color: var(--text-secondary);
 }
 .delta.up {
@@ -114,9 +116,9 @@ const rows = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 18px;
 }
 .err {
   color: var(--negative);
@@ -125,15 +127,16 @@ const rows = computed(() => {
   background: var(--accent-dim);
   color: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 2px 12px;
+  border-radius: 8px;
+  padding: 6px 20px;
+  font-size: var(--fs-small);
   cursor: pointer;
 }
 .stale {
   position: absolute;
   top: 0;
   right: 0;
-  font-size: 11px;
+  font-size: var(--fs-small);
   color: var(--warning);
 }
 </style>

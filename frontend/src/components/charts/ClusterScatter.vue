@@ -21,7 +21,7 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 16, right: 16, top: 30, bottom: 16 },
+    grid: { left: 16, right: 16, top: 48, bottom: 16 },
     legend: { top: 0, data: d.clusters.map((c) => `${c.cluster_label}（${intNum(c.game_cnt)}）`) },
     tooltip: {
       formatter: (p: any) => {
@@ -34,7 +34,7 @@ const option = computed<ChartOption | null>(() => {
     series: d.clusters.map((c, i) => ({
       name: `${c.cluster_label}（${intNum(c.game_cnt)}）`,
       type: 'scatter',
-      symbolSize: 5,
+      symbolSize: 8,
       large: true,
       itemStyle: { color: palette[i % palette.length], opacity: 0.75 },
       data: d.points.filter((p) => p.cluster_id === c.cluster_id).map((p) => ({ value: [p.x, p.y], raw: p })),

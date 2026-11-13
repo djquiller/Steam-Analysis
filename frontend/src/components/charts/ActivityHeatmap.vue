@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, WEEKDAYS } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { color, font } from '@/theme/steam-dark'
 
 const { params } = storeToRefs(useFiltersStore())
 const r = useRemote((s) => ecosystemApi.activityHeatmap(params.value, s), [params])
@@ -19,14 +19,14 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 36, right: 10, top: 6, bottom: 34 },
+    grid: { left: 8, right: 16, top: 8, bottom: 48, containLabel: true },
     tooltip: {
       formatter: (p: any) => {
         const [h, w, v] = p.value
         return `${WEEKDAYS[w]} ${h}:00–${h + 1}:00（UTC）<br/>${bigNum(v)} 条评论`
       },
     },
-    xAxis: { type: 'category', data: Array.from({ length: 24 }, (_, i) => i), axisLabel: { interval: 2, fontSize: 10 } },
+    xAxis: { type: 'category', data: Array.from({ length: 24 }, (_, i) => i), axisLabel: { interval: 2, fontSize: font.small } },
     yAxis: { type: 'category', data: WEEKDAYS, inverse: true },
     visualMap: {
       min: 0,
@@ -34,8 +34,8 @@ const option = computed<ChartOption | null>(() => {
       orient: 'horizontal',
       left: 'center',
       bottom: 0,
-      itemHeight: 120,
-      itemWidth: 8,
+      itemHeight: 200,
+      itemWidth: 12,
       calculable: false,
       text: ['多', '少'],
       inRange: { color: [color.bgPanel, '#2a5a7a', color.accent, '#d6f0ff'] },

@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, pct } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { color, font } from '@/theme/steam-dark'
 
 // Steam 语言代码 → 中文名（只列常见的，其余显示原代码）
 const LANG: Record<string, string> = {
@@ -27,7 +27,7 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 8, right: 56, top: 4, bottom: 4, containLabel: true },
+    grid: { left: 8, right: 70, top: 8, bottom: 8, containLabel: true },
     tooltip: {
       formatter: (p: any) => {
         const it = d.items[p.dataIndex]
@@ -40,10 +40,10 @@ const option = computed<ChartOption | null>(() => {
     series: [
       {
         type: 'bar',
-        barMaxWidth: 12,
+        barMaxWidth: 28,
         data: d.items.map((x) => x.review_cnt),
         itemStyle: { color: color.accent, borderRadius: [0, 3, 3, 0] },
-        label: { show: true, position: 'right', color: color.text, fontSize: 11, formatter: (p: any) => pct(d.items[p.dataIndex]?.share) },
+        label: { show: true, position: 'right', color: color.text, fontSize: font.small, formatter: (p: any) => pct(d.items[p.dataIndex]?.share) },
       },
     ],
   }

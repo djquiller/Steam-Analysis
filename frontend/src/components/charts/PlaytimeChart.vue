@@ -10,7 +10,7 @@ import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
 import { bigNum, pct } from '@/theme/format'
-import { color } from '@/theme/steam-dark'
+import { color, font } from '@/theme/steam-dark'
 
 const { params } = storeToRefs(useFiltersStore())
 const r = useRemote((s) => ecosystemApi.playtimeDist(params.value, s), [params])
@@ -21,7 +21,7 @@ const option = computed<ChartOption | null>(() => {
   const d = r.data.value
   if (!d) return null
   return {
-    grid: { left: 44, right: 10, top: 14, bottom: 22 },
+    grid: { left: 8, right: 16, top: 30, bottom: 8, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -31,7 +31,7 @@ const option = computed<ChartOption | null>(() => {
         return `游玩 ${label(b.min_hours, b.max_hours)}<br/>${bigNum(b.review_cnt)} 条评论（${pct(d.review_cnt ? b.review_cnt / d.review_cnt : null)}）`
       },
     },
-    xAxis: { type: 'category', data: d.bins.map((b) => label(b.min_hours, b.max_hours)), axisLabel: { fontSize: 10, interval: 0 } },
+    xAxis: { type: 'category', data: d.bins.map((b) => label(b.min_hours, b.max_hours)), axisLabel: { fontSize: font.small, interval: 0 } },
     yAxis: { type: 'value', name: '条', axisLabel: { formatter: (v: number) => bigNum(v, 0) } },
     series: [
       {

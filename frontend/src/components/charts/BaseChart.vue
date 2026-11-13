@@ -37,6 +37,13 @@ function render() {
   chart.value.setOption(props.option, { notMerge: props.notMerge, lazyUpdate: true })
 }
 
+// ECharts 画在 canvas 上，首次绘制时如果中文字体分片还没下载完，会先用占位字体画，
+// 之后不会自己重画。所以每批字体下载完成后整体重绘一次（不带动画，避免闪动）。
+function onFontsLoaded() {
+  if (!chart.value || !props.option) return
+  chart.value.setOption({ ...props.option, animation: false }, { notMerge: true })
+}
+
 onMounted(async () => {
   await nextTick()
   if (!el.value) return
@@ -44,12 +51,14 @@ onMounted(async () => {
   chart.value.on('click', (p) => emit('chart-click', p as echarts.ECElementEvent))
   observer = new ResizeObserver(() => chart.value?.resize())
   observer.observe(el.value)
+  document.fonts?.addEventListener('loadingdone', onFontsLoaded)
   render()
 })
 
 watch(() => props.option, render)
 
 onBeforeUnmount(() => {
+  document.fonts?.removeEventListener('loadingdone', onFontsLoaded)
   observer?.disconnect()
   chart.value?.dispose()
 })
@@ -68,7 +77,10 @@ const hasOption = () => props.option !== null && !props.empty
       <span>{{ error || '加载失败' }}</span>
       <button class="retry" @click="emit('retry')">重试</button>
     </div>
-    <div v-else-if="state === 'ready' && empty" class="overlay empty">{{ emptyText }}</div>
+    <div v-else-if="state === 'ready' && empty" class="overlay empty">
+      <span class="empty-icon" aria-hidden="true" />
+      <span>{{ emptyText }}</span>
+    </div>
 
     <div v-if="state === 'error' && hasOption()" class="stale" :title="error || ''">数据未更新</div>
     <div v-if="state === 'loading' && hasOption()" class="refreshing"><span class="spinner" /></div>
@@ -95,11 +107,23 @@ const hasOption = () => props.option !== null && !props.empty
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--fs-body);
   text-align: center;
-  padding: 0 16px;
+  padding: 0 24px;
+}
+.overlay.empty {
+  flex-direction: column;
+  font-size: 18px;
+}
+/* 空态图标：一个虚线圆环，示意"数据还没生成" */
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px dashed rgba(102, 192, 244, 0.45);
+  box-shadow: 0 0 24px rgba(102, 192, 244, 0.15);
 }
 .overlay.error {
   color: var(--negative);
@@ -109,19 +133,20 @@ const hasOption = () => props.option !== null && !props.empty
   background: var(--accent-dim);
   color: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 2px 12px;
+  border-radius: 8px;
+  padding: 6px 20px;
+  font-size: var(--fs-small);
   cursor: pointer;
 }
 .stale {
   position: absolute;
   top: 0;
   right: 0;
-  font-size: 11px;
+  font-size: var(--fs-small);
   color: var(--warning);
-  background: rgba(232, 163, 61, 0.12);
-  border-radius: 3px;
-  padding: 1px 6px;
+  background: rgba(232, 163, 61, 0.14);
+  border-radius: 6px;
+  padding: 2px 10px;
 }
 .refreshing {
   position: absolute;
