@@ -10,12 +10,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { gamesApi } from '@/api'
 import type { ChartOption } from '@/charts/echarts'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import { PLATFORM_ICONS } from '@/components/icons/platforms'
 import IconButton from '@/components/layout/IconButton.vue'
 import Panel from '@/components/layout/Panel.vue'
 import ScreenContainer from '@/components/layout/ScreenContainer.vue'
 import { useRemote } from '@/composables/useRemote'
 import { bigNum, hours, intNum, pct, usd } from '@/theme/format'
-import { barGradient, color, hbarGradient, priceBucketMeta } from '@/theme/steam-dark'
+import { barGradient, color, hbarGradient } from '@/theme/steam-dark'
 
 const route = useRoute()
 const router = useRouter()
@@ -143,9 +144,14 @@ const peerOption = computed<ChartOption | null>(() => {
           <img v-if="g.header_image" :src="g.header_image" :alt="g.name" class="cover" referrerpolicy="no-referrer" />
           <div class="meta">
             <div><span>发行</span>{{ g.release_date ?? '未发行' }}</div>
-            <div><span>价格</span>{{ usd(g.price_usd) }}<em class="bucket" :style="{ color: priceBucketMeta[g.price_bucket]?.color }">{{ priceBucketMeta[g.price_bucket]?.label }}</em></div>
+            <div>
+              <span>价格</span>
+              <!-- 免费游戏只显示绿色"免费"胶囊；付费游戏显示实际价格 + 红色"付费"胶囊 -->
+              <template v-if="g.price_usd > 0">{{ usd(g.price_usd) }}</template>
+              <em class="tag price-tag" :class="g.price_usd > 0 ? 'paid' : 'free'">{{ g.price_usd > 0 ? '付费' : '免费' }}</em>
+            </div>
             <div><span>开发 / 发行</span>{{ g.developer ?? '—' }} / {{ g.publisher ?? '—' }}</div>
-            <div><span>平台</span><em v-for="x in g.platforms" :key="x" class="tag">{{ PLATFORM_NAMES[x] ?? x }}</em><template v-if="!g.platforms.length">—</template></div>
+            <div><span>平台</span><em v-for="x in g.platforms" :key="x" class="tag platform-tag"><svg v-if="PLATFORM_ICONS[x]" class="plat-icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="PLATFORM_ICONS[x]" fill-rule="evenodd" /></svg>{{ PLATFORM_NAMES[x] ?? x }}</em><template v-if="!g.platforms.length">—</template></div>
             <div><span>类型</span><em v-for="x in g.genres" :key="x" class="tag">{{ x }}</em><template v-if="!g.genres.length">—</template></div>
             <div><span>其他</span>{{ intNum(g.dlc_count) }} 个 DLC · {{ intNum(g.achievements) }} 个成就 · 支持 {{ intNum(g.num_languages) }} 种语言 · {{ g.required_age ? `${g.required_age}+` : '无年龄限制' }}</div>
           </div>
@@ -284,11 +290,6 @@ const peerOption = computed<ChartOption | null>(() => {
   width: 120px;
   color: var(--text-secondary);
 }
-.bucket {
-  font-style: normal;
-  margin-left: 12px;
-  font-size: var(--fs-small);
-}
 .tag {
   font-style: normal;
   font-size: var(--fs-small);
@@ -296,6 +297,31 @@ const peerOption = computed<ChartOption | null>(() => {
   border-radius: 12px;
   padding: 1px 10px;
   margin-right: 8px;
+}
+/* 平台胶囊：名称前加平台图标 */
+.platform-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+.plat-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: currentColor;
+}
+/* 免费 / 付费胶囊：付费红、免费绿（取主题里的好 / 坏语义色，饱和度已调低，和整体色调一致） */
+.price-tag.free {
+  color: var(--positive);
+  border-color: rgba(158, 214, 184, 0.5);
+  background: rgba(158, 214, 184, 0.12);
+}
+.price-tag.paid {
+  margin-left: 20px; /* 和前面的价格文字隔开；免费游戏前面没有价格文字，不需要 */
+  color: var(--negative);
+  border-color: rgba(229, 154, 166, 0.5);
+  background: rgba(229, 154, 166, 0.12);
 }
 .facts {
   grid-area: facts;
