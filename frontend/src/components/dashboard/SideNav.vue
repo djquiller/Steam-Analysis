@@ -1,0 +1,310 @@
+<script setup lang="ts">
+/**
+ * 左侧可折叠导航：品牌 · 四个标签页 · 自动轮播 · 数据更新时间。
+ * - 展开 304px：图标 + 编号 + 标签名 + 说明；折叠 92px：只剩图标，悬停用浏览器原生提示看名字。
+ * - 当前页的高亮块是一个独立的层，切页时沿竖直方向弹性滑到新位置，而不是闪一下。
+ * 文字与按钮都沿用改版前顶栏里的那些，没有新增。
+ */
+import { computed } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+
+import { metaApi } from '@/api'
+import { useRemote } from '@/composables/useRemote'
+import { dateTime } from '@/theme/format'
+import { CAROUSEL_SECONDS, TABS } from '@/views/tabs/registry'
+
+const props = defineProps<{ collapsed: boolean }>()
+const autoplay = defineModel<boolean>('autoplay', { required: true })
+const emit = defineEmits<{ (e: 'manual-nav'): void }>()
+
+const route = useRoute()
+const updated = useRemote((s) => metaApi.updatedAt(s))
+
+const ITEM_H = 64
+const ITEM_GAP = 10
+const activeIndex = computed(() => TABS.findIndex((t) => route.path.startsWith(t.path)))
+
+// 每个标签页一个线条图标（24×24，描边用 currentColor，随文字颜色变化）
+const ICONS: Record<string, string> = {
+  overview: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
+  market: 'M3 17l5-5 4 4 8-9M15 7h5v5',
+  players: 'M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5M16 11a3 3 0 1 0 0-6M18 15c2 .5 3.2 2 3.5 5',
+  hits: 'M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.5 2 3 0-3-.5-5.5 1-8.5z',
+}
+</script>
+
+<template>
+  <aside class="side" :class="{ collapsed: props.collapsed }">
+    <div class="brand">
+      <span class="logo" aria-hidden="true" />
+      <div class="brand-text">
+        <div class="name">Steam 玩家生态与热销趋势</div>
+        <div class="sub">市场在变 · 玩家在想什么 · 什么游戏会火</div>
+      </div>
+    </div>
+
+    <nav class="nav" :style="{ '--item-h': `${ITEM_H}px`, '--item-gap': `${ITEM_GAP}px` }">
+      <div
+        v-if="activeIndex >= 0"
+        class="indicator"
+        :style="{ transform: `translateY(${activeIndex * (ITEM_H + ITEM_GAP)}px)` }"
+      />
+      <RouterLink
+        v-for="(t, i) in TABS"
+        :key="t.name"
+        :to="t.path"
+        class="item"
+        active-class="on"
+        :title="props.collapsed ? `${t.label} · ${t.hint}` : undefined"
+        @click="emit('manual-nav')"
+      >
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS[t.name]" /></svg>
+        <span class="text">
+          <span class="label"><em>0{{ i + 1 }}</em>{{ t.label }}</span>
+          <span class="hint">{{ t.hint }}</span>
+        </span>
+      </RouterLink>
+    </nav>
+
+    <div class="foot">
+      <button
+        class="carousel"
+        :class="{ on: autoplay }"
+        :title="`每页停留 ${CAROUSEL_SECONDS} 秒；键盘 ← → 或 1–4 也可切换`"
+        @click="autoplay = !autoplay"
+      >
+        <span class="dot" />
+        <span class="text">{{ autoplay ? '轮播中' : '自动轮播' }}</span>
+      </button>
+      <div class="updated text">
+        <div>数据更新 {{ dateTime(updated.data.value?.data_updated_at, true) }}</div>
+        <div>在线快照 {{ dateTime(updated.data.value?.ccu_updated_at) }}</div>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<style scoped>
+.side {
+  --w: 304px;
+  width: var(--w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  padding: 30px 18px 26px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  transition:
+    width 0.6s var(--ease-out),
+    padding 0.6s var(--ease-out);
+}
+.side.collapsed {
+  --w: 92px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* 折叠时文字淡出并收起；展开时稍晚淡入，等宽度先打开 */
+.text,
+.brand-text {
+  white-space: nowrap;
+  transition:
+    opacity 0.35s var(--ease-out) 0.15s,
+    transform 0.45s var(--ease-out) 0.1s;
+}
+.collapsed .text,
+.collapsed .brand-text {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition-delay: 0s;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 6px;
+  min-height: 48px;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 30% 25%, #ffffff, transparent 45%),
+    linear-gradient(140deg, #d4d6ff, #7f84dc 55%, #2c2e4a);
+  box-shadow:
+    0 0 24px rgba(163, 167, 240, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: rotate(-8deg);
+}
+.brand-text .name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-strong);
+}
+.brand-text .sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--item-gap);
+}
+/* 当前页高亮块：磨砂底 + 左侧一道亮光，弹性滑动到当前项 */
+.indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--item-h);
+  border-radius: 16px;
+  background: linear-gradient(110deg, rgba(163, 167, 240, 0.26), rgba(163, 167, 240, 0.06));
+  box-shadow:
+    inset 0 0 0 1px rgba(212, 214, 255, 0.18),
+    0 10px 30px rgba(10, 10, 30, 0.45);
+  transition: transform 0.65s var(--ease-spring);
+}
+.indicator::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: 16px;
+  bottom: 16px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent-bright);
+  box-shadow: 0 0 14px var(--accent);
+}
+.item {
+  position: relative;
+  height: var(--item-h);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  border-radius: 16px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition:
+    color 0.35s var(--ease-out),
+    background 0.35s var(--ease-out);
+}
+.collapsed .item {
+  padding: 0 20px;
+}
+.item:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+.item.on {
+  color: var(--text-strong);
+}
+.icon {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.45s var(--ease-spring);
+}
+.item:hover .icon {
+  transform: translateX(2px) scale(1.06);
+}
+.item.on .icon {
+  stroke: var(--accent-bright);
+  filter: drop-shadow(0 0 6px rgba(163, 167, 240, 0.6));
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.label {
+  font-size: 18px;
+  font-weight: 600;
+}
+.label em {
+  font-style: normal;
+  font-family: var(--font-number);
+  font-weight: 400;
+  margin-right: 8px;
+  opacity: 0.55;
+}
+.hint {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.carousel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 24px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  cursor: pointer;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  transition:
+    background 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out),
+    padding 0.6s var(--ease-out);
+}
+.collapsed .carousel {
+  padding: 0 21px;
+}
+.carousel:hover {
+  border-color: rgba(212, 214, 255, 0.3);
+}
+.carousel .dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: background 0.4s var(--ease-out);
+}
+.carousel.on {
+  border-color: rgba(212, 214, 255, 0.4);
+  background: linear-gradient(110deg, rgba(163, 167, 240, 0.28), rgba(163, 167, 240, 0.06));
+}
+.carousel.on .dot {
+  background: var(--accent-bright);
+  box-shadow: 0 0 10px var(--accent);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+.updated {
+  padding: 0 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+</style>
