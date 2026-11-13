@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { rankApi } from '@/api'
+import IconButton from '@/components/layout/IconButton.vue'
 import Panel from '@/components/layout/Panel.vue'
 import { useRemote } from '@/composables/useRemote'
 import { intNum } from '@/theme/format'
@@ -43,7 +44,7 @@ const rows = computed(() => {
       <template v-if="r.state.value === 'loading'">加载中…</template>
       <template v-else-if="r.state.value === 'error'">
         <span class="err">{{ r.error.value }}</span>
-        <button class="retry" @click="r.reload">重试</button>
+        <IconButton icon="retry" label="重试" :size="42" @click="r.reload" />
       </template>
       <template v-else>还没有在线人数榜单（等待每小时快照聚合）</template>
     </div>
@@ -122,15 +123,6 @@ const rows = computed(() => {
 }
 .err {
   color: var(--negative);
-}
-.retry {
-  background: var(--accent-dim);
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 6px 20px;
-  font-size: var(--fs-small);
-  cursor: pointer;
 }
 .stale {
   position: absolute;

@@ -10,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { gamesApi } from '@/api'
 import type { ChartOption } from '@/charts/echarts'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import IconButton from '@/components/layout/IconButton.vue'
 import Panel from '@/components/layout/Panel.vue'
 import ScreenContainer from '@/components/layout/ScreenContainer.vue'
 import { useRemote } from '@/composables/useRemote'
@@ -123,14 +124,14 @@ const peerOption = computed<ChartOption | null>(() => {
   <ScreenContainer>
     <div class="detail">
       <header class="top">
-        <button class="back" @click="back">← 返回大屏</button>
+        <IconButton icon="back" label="返回大屏" @click="back" />
         <h1>{{ g?.name ?? (detail.state.value === 'loading' ? '加载中…' : '游戏详情') }}</h1>
         <span class="appid">appid {{ appid }}</span>
       </header>
 
       <div v-if="detail.state.value === 'error' && !g" class="fatal">
         <p>{{ detail.error.value }}</p>
-        <button class="back" @click="detail.reload">重试</button>
+        <IconButton icon="retry" label="重试" @click="detail.reload" />
       </div>
 
       <main v-else-if="g" class="grid">
@@ -216,15 +217,6 @@ const peerOption = computed<ChartOption | null>(() => {
 .appid {
   color: var(--text-secondary);
   font-size: var(--fs-small);
-}
-.back {
-  background: var(--accent-dim);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  border-radius: 10px;
-  padding: 8px 20px;
-  font-size: var(--fs-body);
-  cursor: pointer;
 }
 .fatal {
   flex: 1;

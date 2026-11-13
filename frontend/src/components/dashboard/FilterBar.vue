@@ -10,6 +10,7 @@ import { computed } from 'vue'
 
 import { metaApi } from '@/api'
 import type { PriceBucket } from '@/api/types'
+import IconButton from '@/components/layout/IconButton.vue'
 import PillPopover from '@/components/layout/PillPopover.vue'
 import { useRemote } from '@/composables/useRemote'
 import { useFiltersStore } from '@/stores/filters'
@@ -95,7 +96,7 @@ const isOn = (k: PriceBucket) => priceBuckets.value.includes(k)
       </div>
     </PillPopover>
 
-    <button class="reset" :disabled="!active" @click="filters.reset()">重置筛选</button>
+    <IconButton icon="reset" label="重置筛选" :disabled="!active" @click="filters.reset()" />
   </div>
 </template>
 
@@ -233,27 +234,6 @@ select option {
   opacity: 1;
 }
 
-.reset {
-  height: 46px;
-  padding: 0 20px;
-  border-radius: 23px;
-  color: var(--text-primary);
-  background: linear-gradient(110deg, rgba(163, 167, 240, 0.3), rgba(163, 167, 240, 0.1));
-  border: 1px solid rgba(212, 214, 255, 0.3);
-  font-size: var(--fs-small);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    opacity 0.35s var(--ease-out),
-    transform 0.35s var(--ease-spring);
-}
-.reset:active:not(:disabled) {
-  transform: scale(0.95);
-}
-.reset:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
 .warn {
   color: var(--negative);
   font-size: var(--fs-small);

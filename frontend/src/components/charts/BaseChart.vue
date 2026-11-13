@@ -7,6 +7,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 
 import { echarts, type ChartOption } from '@/charts/echarts'
+import IconButton from '@/components/layout/IconButton.vue'
 import type { RemoteState } from '@/composables/useRemote'
 import { THEME_NAME } from '@/theme/steam-dark'
 
@@ -77,7 +78,7 @@ const hasOption = () => props.option !== null && !props.empty
     </div>
     <div v-else-if="state === 'error' && !hasOption()" class="overlay error">
       <span>{{ error || '加载失败' }}</span>
-      <button class="retry" @click="emit('retry')">重试</button>
+      <IconButton icon="retry" label="重试" :size="42" @click="emit('retry')" />
     </div>
     <div v-else-if="state === 'ready' && empty" class="overlay empty">
       <span class="empty-icon" aria-hidden="true" />
@@ -131,15 +132,6 @@ const hasOption = () => props.option !== null && !props.empty
 .overlay.error {
   color: var(--negative);
   flex-direction: column;
-}
-.retry {
-  background: var(--accent-dim);
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 6px 20px;
-  font-size: var(--fs-small);
-  cursor: pointer;
 }
 .stale {
   position: absolute;

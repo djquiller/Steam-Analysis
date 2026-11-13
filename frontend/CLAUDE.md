@@ -51,6 +51,7 @@
 
 "可视化效果"占 20%，每个图表组件按此执行：
 
+- **按钮尽量用矢量图标，不写文字**（`IconButton.vue`），用途写在 `label` 里（读屏 + 悬停提示）。只有文字本身就是选项值的控件（口径切换、分箱宽度、价格档位、筛选胶囊）保留文字。
 - **单位与口径说明不自动生成**（2026-11-13 起）：卡片标题下、KPI 卡下都不放说明文字，需要时由成员按需手动加回（`Panel` 的 `note` 属性，不传就不显示）。注意评分细则里有"缺单位和口径"这一扣分项，答辩前要逐张确认哪些图需要补。
 - 类别 > 5 个用条形图或树图；饼图仅用于 ≤ 5 类的占比。
 - **三态**：加载中 / 空数据 / 报错，统一由 `BaseChart` 处理；接口失败时提示并保留上次成功的数据作为降级。
@@ -120,6 +121,7 @@ src/
 | `src/theme/format.ts` | 数字与时间格式：亿 / 万、千分位、百分比、美元、UTC 转本地时间 |
 | `src/components/layout/Panel.vue` | 磨砂卡片外壳（`.glass`）：标题 + 可选的口径说明（`note`，默认不显示）+ 右上角操作区 |
 | `src/components/layout/Segmented.vue` | 卡片右上角的分段切换（口径、分箱宽度） |
+| `src/components/layout/IconButton.vue` | 圆形磨砂图标按钮（返回 / 重试 / 重置）：只显示矢量图标，`label` 作为读屏文字和悬停提示；每个图标有自己的悬停小动作 |
 | `src/components/layout/PillPopover.vue` | 胶囊按钮 + 磨砂弹出面板（筛选用），只切 class 不依赖帧回调 |
 | `src/components/dashboard/` | 左侧导航 `SideNav`、全局筛选胶囊 `FilterBar`、KPI 卡（数字滚动） |
 | `src/theme/fonts.ts` | 本地字体引入与 `FONT_FAMILY` |
