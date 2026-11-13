@@ -128,7 +128,6 @@ const peerOption = computed<ChartOption | null>(() => {
       <header class="top">
         <IconButton icon="back" label="返回大屏" @click="back" />
         <h1>{{ g?.name ?? (detail.state.value === 'loading' ? '加载中…' : '游戏详情') }}</h1>
-        <span class="appid">appid {{ appid }}</span>
       </header>
 
       <div v-if="detail.state.value === 'error' && !g" class="fatal">
@@ -215,10 +214,6 @@ const peerOption = computed<ChartOption | null>(() => {
   font-size: 32px;
   letter-spacing: 1px;
   color: var(--text-strong);
-}
-.appid {
-  color: var(--text-secondary);
-  font-size: var(--fs-small);
 }
 .fatal {
   flex: 1;
