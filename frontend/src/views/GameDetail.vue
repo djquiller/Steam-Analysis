@@ -34,14 +34,16 @@ function back() {
 const facts = computed(() => {
   const x = g.value
   if (!x) return []
+  // 游玩时长来自 SteamSpy，没有数据时记为 0（约 79% 的游戏），所以 0 按"无数据"显示成"—"
+  const playtime = (min: number | null) => (min ? hours(min) : '—')
+  // unit 紧跟在数字后面；好评率的 % 和游玩时长的"小时"已经在数值里，不再单列
   return [
-    // unit 紧跟在数字后面；好评率的 % 和游玩时长的"小时"已经在数值里，不再单列
     { label: '拥有者', value: x.owners_mid === null ? '—' : `${bigNum(x.owners_low)}–${bigNum(x.owners_high)}`, unit: '份' },
     { label: '历史峰值在线', value: intNum(x.peak_ccu), unit: '人' },
     { label: '评论数', value: bigNum(x.review_cnt), unit: '条' },
     { label: '好评率', value: pct(x.positive_rate), unit: '' },
-    { label: '平均游玩', value: hours(x.avg_playtime_min), unit: '' },
-    { label: 'Metacritic', value: x.metacritic_score === null ? '—' : String(x.metacritic_score), unit: '分' },
+    { label: '平均游玩', value: playtime(x.avg_playtime_min), unit: '' },
+    { label: '中位游玩', value: playtime(x.median_playtime_min), unit: '' },
   ]
 })
 
