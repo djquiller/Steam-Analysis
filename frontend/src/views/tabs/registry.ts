@@ -1,4 +1,5 @@
-// 大屏的标签页：按故事线"市场在变 → 玩家在想什么 → 什么游戏会火"排列，第一页是总览。
+// 大屏的标签页：第一页是总览，后三页按答辩讲述顺序排列（市场 → 玩家 → 热销）。
+// 名称按页内卡片的实际内容命名（名词短语，不用句子）；hint 列出页内卡片，显示在主区标题的后半段。
 // 每页最多 4 张大卡片，避免一屏塞太多小图让观众眼睛疲劳。
 export interface TabDef {
   path: string
@@ -8,8 +9,8 @@ export interface TabDef {
 }
 
 export const TABS: TabDef[] = [
-  { path: '/overview', name: 'overview', label: '总览', hint: '规模与实时动态' },
-  { path: '/market', name: 'market', label: '市场在变', hint: '类型与价格' },
-  { path: '/players', name: 'players', label: '玩家在想什么', hint: '口碑与行为' },
-  { path: '/hits', name: 'hits', label: '什么游戏会火', hint: '热销与分群' },
+  { path: '/overview', name: 'overview', label: '总览', hint: '规模与实时在线' },
+  { path: '/market', name: 'market', label: '类型与价格', hint: '类型热度 · 价格 × 好评率' },
+  { path: '/players', name: 'players', label: '评论与口碑', hint: '好评率 · 语言 · 时长 · 时段' },
+  { path: '/hits', name: 'hits', label: '热销与分群', hint: '热销榜 · 聚类' },
 ]

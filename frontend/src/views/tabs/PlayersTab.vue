@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** 03 玩家在想什么：口碑（好评率、语言）与行为（游玩时长、活跃时段），2 × 2 大卡片 */
+/** 03 评论与口碑：口碑（好评率、语言）与行为（游玩时长、活跃时段），2 × 2 大卡片 */
 import ActivityHeatmap from '@/components/charts/ActivityHeatmap.vue'
 import LanguageBar from '@/components/charts/LanguageBar.vue'
 import PlaytimeChart from '@/components/charts/PlaytimeChart.vue'

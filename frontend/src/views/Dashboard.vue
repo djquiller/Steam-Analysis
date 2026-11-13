@@ -71,7 +71,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
       <section class="main">
         <header class="head">
-          <h1 :key="current.name" class="title">
+          <h1 :key="current.name" class="title" :title="`${current.label} · ${current.hint}`">
             {{ current.label }}<span>{{ current.hint }}</span>
           </h1>
           <FilterBar class="filter-bar" />
@@ -116,8 +116,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   margin-bottom: 22px;
 }
 
-/* 页标题：标签名白色 + 说明薰衣草色，切页时重新挂载并播放入场动画 */
+/* 页标题：标签名白色 + 说明薰衣草色，切页时重新挂载并播放入场动画。
+   空间不够时（1920 宽、侧栏展开、筛选值较长）由标题让位：说明部分末尾截成"…"，不压到右侧筛选胶囊。 */
 .title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin: 0;
   font-size: 46px;
   font-weight: 400;
