@@ -31,6 +31,9 @@ function back() {
   else router.push('/')
 }
 
+// 接口返回的平台取值是小写的 windows / mac / linux，显示时用官方写法
+const PLATFORM_NAMES: Record<string, string> = { windows: 'Windows', mac: 'macOS', linux: 'Linux' }
+
 const facts = computed(() => {
   const x = g.value
   if (!x) return []
@@ -142,7 +145,7 @@ const peerOption = computed<ChartOption | null>(() => {
             <div><span>发行</span>{{ g.release_date ?? '未发行' }}</div>
             <div><span>价格</span>{{ usd(g.price_usd) }}<em class="bucket" :style="{ color: priceBucketMeta[g.price_bucket]?.color }">{{ priceBucketMeta[g.price_bucket]?.label }}</em></div>
             <div><span>开发 / 发行</span>{{ g.developer ?? '—' }} / {{ g.publisher ?? '—' }}</div>
-            <div><span>平台</span>{{ g.platforms.join(' · ') || '—' }}</div>
+            <div><span>平台</span><em v-for="x in g.platforms" :key="x" class="tag">{{ PLATFORM_NAMES[x] ?? x }}</em><template v-if="!g.platforms.length">—</template></div>
             <div><span>类型</span><em v-for="x in g.genres" :key="x" class="tag">{{ x }}</em><template v-if="!g.genres.length">—</template></div>
             <div><span>其他</span>{{ intNum(g.dlc_count) }} 个 DLC · {{ intNum(g.achievements) }} 个成就 · 支持 {{ intNum(g.num_languages) }} 种语言 · {{ g.required_age ? `${g.required_age}+` : '无年龄限制' }}</div>
           </div>
