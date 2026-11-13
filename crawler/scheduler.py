@@ -37,7 +37,6 @@ from logging.handlers import RotatingFileHandler
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_MISSED
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
 
 from . import ccu_snapshot, ccu_watchlist
 from .common import settings
@@ -101,8 +100,6 @@ def setup_logging() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="定时采集常驻进程")
     parser.add_argument("--no-catchup", action="store_true", help="启动时不补采当前小时")
-    parser.add_argument("--interval-seconds", type=int, default=None,
-                        help="仅用于测试：在线人数改为每隔这么多秒触发一次，代替每小时一次")
     args = parser.parse_args()
     setup_logging()
 
@@ -115,11 +112,6 @@ def main() -> None:
     scheduler.add_listener(
         lambda e: log.warning("任务 %s 错过了触发时间且超出补跑期限，跳过", e.job_id), EVENT_JOB_MISSED)
 
-    if args.interval_seconds:
-        ccu_trigger = IntervalTrigger(seconds=args.interval_seconds, timezone=timezone.utc)
-    else:
-        ccu_trigger = CronTrigger(minute=2, timezone=timezone.utc)
-
     catchup = False
     if not args.no_catchup:
         try:
@@ -127,7 +119,8 @@ def main() -> None:
         except Exception as exc:  # noqa: BLE001
             log.error("启动时查不了数据库，跳过补采：%s: %s", type(exc).__name__, exc)
     job_kwargs = {"next_run_time": datetime.now(timezone.utc)} if catchup else {}
-    scheduler.add_job(job_ccu, ccu_trigger, id="ccu_snapshot", **job_kwargs)
+    scheduler.add_job(job_ccu, CronTrigger(minute=2, timezone=timezone.utc),
+                      id="ccu_snapshot", **job_kwargs)
     scheduler.add_job(job_watchlist, CronTrigger(hour=0, minute=50, timezone=timezone.utc),
                       id="ccu_watchlist")
 
@@ -141,9 +134,7 @@ def main() -> None:
         signal.signal(signal.SIGBREAK, on_signal)
 
     scheduler.start()
-    log.info("定时进程已启动：在线人数 %s%s；名单每天 UTC 00:50 刷新。按 Ctrl+C 退出。",
-             f"每 {args.interval_seconds} 秒" if args.interval_seconds else "每小时第 2 分钟（UTC）",
-             "，启动后立即补采当前小时" if catchup else "")
+    log.info("定时进程已启动：按 Ctrl+C 退出")
     try:
         while not stop.is_set():
             time.sleep(0.5)
