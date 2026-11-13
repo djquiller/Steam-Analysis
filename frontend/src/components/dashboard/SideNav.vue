@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 左侧可折叠导航：品牌 · 四个标签页 · 自动轮播 · 数据更新时间。
- * - 展开 304px：图标 + 编号 + 标签名 + 说明；折叠 92px：只剩图标，悬停用浏览器原生提示看名字。
+ * - 展开 304px：图标 + 标签名；折叠 92px：只剩图标，悬停用浏览器原生提示看名字。
  * - 当前页的高亮块是一个独立的层，切页时沿竖直方向弹性滑到新位置，而不是闪一下。
  * - 左上角的 Logo 就是折叠开关：悬停时弹性摆正、放大并扫过一道光；按下压缩，松开后果冻式回弹。
  * 文字与按钮都沿用改版前顶栏里的那些，没有新增。
@@ -34,7 +34,7 @@ function onLogo() {
 }
 const updated = useRemote((s) => metaApi.updatedAt(s))
 
-const ITEM_H = 64
+const ITEM_H = 56
 const ITEM_GAP = 10
 const activeIndex = computed(() => TABS.findIndex((t) => route.path.startsWith(t.path)))
 
@@ -71,19 +71,16 @@ const ICONS: Record<string, string> = {
         :style="{ transform: `translateY(${activeIndex * (ITEM_H + ITEM_GAP)}px)` }"
       />
       <RouterLink
-        v-for="(t, i) in TABS"
+        v-for="t in TABS"
         :key="t.name"
         :to="t.path"
         class="item"
         active-class="on"
-        :title="collapsed ? `${t.label} · ${t.hint}` : undefined"
+        :title="collapsed ? t.label : undefined"
         @click="emit('manual-nav')"
       >
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS[t.name]" /></svg>
-        <span class="text">
-          <span class="label"><em>0{{ i + 1 }}</em>{{ t.label }}</span>
-          <span class="hint">{{ t.hint }}</span>
-        </span>
+        <span class="text label">{{ t.label }}</span>
       </RouterLink>
     </nav>
 
@@ -263,8 +260,8 @@ const ICONS: Record<string, string> = {
   content: '';
   position: absolute;
   left: -18px;
-  top: 16px;
-  bottom: 16px;
+  top: 14px;
+  bottom: 14px;
   width: 3px;
   border-radius: 3px;
   background: var(--accent-bright);
@@ -312,25 +309,9 @@ const ICONS: Record<string, string> = {
   stroke: var(--accent-bright);
   filter: drop-shadow(0 0 6px rgba(163, 167, 240, 0.6));
 }
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 .label {
   font-size: 18px;
   font-weight: 600;
-}
-.label em {
-  font-style: normal;
-  font-family: var(--font-number);
-  font-weight: 400;
-  margin-right: 8px;
-  opacity: 0.55;
-}
-.hint {
-  font-size: 13px;
-  opacity: 0.75;
 }
 
 .foot {
