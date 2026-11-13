@@ -1,103 +1,122 @@
 <script setup lang="ts">
 /**
- * 主屏（1920×1080）：顶部筛选与 KPI，下面三栏讲一条线——
- * 左：市场在变；中：什么游戏会火；右：玩家在想什么。
+ * 大屏外壳（1920×1080）：顶栏（标签页 + 全局筛选）+ 当前标签页的内容。
+ * - 标签页是子路由（/overview、/market、/players、/hits），可以直接用链接打开某一页；
+ * - 切换时新页面用 CSS 动画淡入上移（不依赖帧回调）；已打开过的页用 KeepAlive 缓存，切回来不重新请求；
+ * - 自动轮播：每页停留 CAROUSEL_SECONDS 秒，手动点标签页即停止；键盘 ← → / 1–4 切换。
  */
-import ActivityHeatmap from '@/components/charts/ActivityHeatmap.vue'
-import ClusterScatter from '@/components/charts/ClusterScatter.vue'
-import GenreTreemap from '@/components/charts/GenreTreemap.vue'
-import LanguageBar from '@/components/charts/LanguageBar.vue'
-import OnlineLiveList from '@/components/charts/OnlineLiveList.vue'
-import PlaytimeChart from '@/components/charts/PlaytimeChart.vue'
-import PriceRatingBox from '@/components/charts/PriceRatingBox.vue'
-import RatingDistChart from '@/components/charts/RatingDistChart.vue'
-import TopSellersBar from '@/components/charts/TopSellersBar.vue'
-import YearlyChart from '@/components/charts/YearlyChart.vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
 import HeaderBar from '@/components/dashboard/HeaderBar.vue'
-import KpiCards from '@/components/dashboard/KpiCards.vue'
 import ScreenContainer from '@/components/layout/ScreenContainer.vue'
+
+import { CAROUSEL_SECONDS, TABS } from './tabs/registry'
+
+defineOptions({ name: 'Dashboard' })
+
+const route = useRoute()
+const router = useRouter()
+const autoplay = ref(false)
+let timer: ReturnType<typeof setInterval> | null = null
+
+function currentIndex() {
+  const i = TABS.findIndex((t) => route.path.startsWith(t.path))
+  return i < 0 ? 0 : i
+}
+
+function go(offset: number) {
+  const next = TABS[(currentIndex() + offset + TABS.length) % TABS.length]
+  if (next) router.push(next.path)
+}
+
+watch(autoplay, (on) => {
+  if (timer) clearInterval(timer)
+  timer = on ? setInterval(() => go(1), CAROUSEL_SECONDS * 1000) : null
+})
+
+function onKey(e: KeyboardEvent) {
+  const el = e.target as HTMLElement | null
+  if (el && ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return
+  if (e.key === 'ArrowRight') go(1)
+  else if (e.key === 'ArrowLeft') go(-1)
+  else if (/^[1-9]$/.test(e.key)) {
+    const t = TABS[Number(e.key) - 1]
+    if (t) router.push(t.path)
+  } else return
+  autoplay.value = false
+}
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <template>
   <ScreenContainer>
     <div class="dashboard">
-      <HeaderBar />
-      <div class="kpi-row"><KpiCards /></div>
-      <main class="columns">
-        <section class="col">
-          <h2 class="col-title">市场在变</h2>
-          <div class="stack three">
-            <YearlyChart />
-            <GenreTreemap />
-            <PriceRatingBox />
-          </div>
-        </section>
-        <section class="col">
-          <h2 class="col-title">什么游戏会火</h2>
-          <div class="stack center">
-            <TopSellersBar />
-            <OnlineLiveList />
-            <ClusterScatter />
-          </div>
-        </section>
-        <section class="col">
-          <h2 class="col-title">玩家在想什么</h2>
-          <div class="stack four">
-            <RatingDistChart />
-            <LanguageBar />
-            <PlaytimeChart />
-            <ActivityHeatmap />
-          </div>
-        </section>
+      <HeaderBar v-model:autoplay="autoplay" @manual-nav="autoplay = false" />
+      <main class="content">
+        <RouterView v-slot="{ Component }">
+          <KeepAlive>
+            <component :is="Component" />
+          </KeepAlive>
+        </RouterView>
       </main>
+      <div v-if="autoplay" :key="route.path" class="progress" :style="{ animationDuration: `${CAROUSEL_SECONDS}s` }" />
     </div>
   </ScreenContainer>
 </template>
 
 <style scoped>
 .dashboard {
-  height: 1080px;
-  display: grid;
-  grid-template-rows: 72px 108px 1fr;
-}
-.kpi-row {
-  padding: 14px 18px 0;
-}
-.columns {
-  display: grid;
-  grid-template-columns: 590px 1fr 590px;
-  gap: var(--gap);
-  padding: 10px 18px 16px;
-  min-height: 0;
-}
-.col {
+  position: relative;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
-.col-title {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 6px;
-  color: var(--accent);
-  text-align: center;
-  background: linear-gradient(90deg, transparent, rgba(102, 192, 244, 0.16), transparent);
-  line-height: 24px;
-}
-.stack {
+.content {
   flex: 1;
-  display: grid;
-  gap: var(--gap);
   min-height: 0;
+  padding: 20px 32px 28px;
 }
-.stack.three {
-  grid-template-rows: 1fr 1.15fr 1fr;
+/* 切页动效：新页面一插入 DOM 就播放淡入上移（KeepAlive 切回来时重新插入，动画也会重播）。
+   不用 <Transition mode="out-in">：它依赖 requestAnimationFrame 推进离场，浏览器在后台或被遮挡时
+   会暂停帧回调，旧页卡在离场、新页迟迟不挂载，轮播演示时就会出现空白页。 */
+.content > :deep(*) {
+  height: 100%;
+  animation: tab-in 0.4s ease both;
 }
-.stack.center {
-  grid-template-rows: 1.15fr 0.95fr 1.25fr;
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.stack.four {
-  grid-template-rows: repeat(4, 1fr);
+/* 轮播进度条：贴在底边，跑满一条换下一页 */
+.progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, var(--accent));
+  box-shadow: 0 0 10px var(--accent-glow);
+  animation: progress linear forwards;
+}
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 </style>
