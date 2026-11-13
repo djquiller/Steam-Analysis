@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 左侧可折叠导航：品牌 · 四个标签页 · 自动轮播 · 数据更新时间。
+ * 左侧可折叠导航：品牌 · 四个标签页。
  * - 展开 304px：图标 + 标签名；折叠 92px：只剩图标，悬停用浏览器原生提示看名字。
  * - 当前页的高亮块是一个独立的层，切页时沿竖直方向弹性滑到新位置，而不是闪一下。
  * - 左上角的 Logo 就是折叠开关：悬停时弹性摆正、放大并扫过一道光；按下压缩，松开后果冻式回弹。
@@ -9,14 +9,9 @@
 import { computed, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
-import { metaApi } from '@/api'
-import { useRemote } from '@/composables/useRemote'
-import { dateTime } from '@/theme/format'
-import { CAROUSEL_SECONDS, TABS } from '@/views/tabs/registry'
+import { TABS } from '@/views/tabs/registry'
 
 const collapsed = defineModel<boolean>('collapsed', { required: true })
-const autoplay = defineModel<boolean>('autoplay', { required: true })
-const emit = defineEmits<{ (e: 'manual-nav'): void }>()
 
 const route = useRoute()
 
@@ -32,7 +27,6 @@ function onLogo() {
   void el.offsetWidth
   el.classList.add('pop')
 }
-const updated = useRemote((s) => metaApi.updatedAt(s))
 
 const ITEM_H = 56
 const ITEM_GAP = 10
@@ -59,8 +53,7 @@ const ICONS: Record<string, string> = {
         @animationend="logo?.classList.remove('pop')"
       />
       <div class="brand-text">
-        <div class="name">Steam 玩家生态与热销趋势</div>
-        <div class="sub">市场在变 · 玩家在想什么 · 什么游戏会火</div>
+        <div class="name">Steam Analysis</div>
       </div>
     </div>
 
@@ -77,28 +70,12 @@ const ICONS: Record<string, string> = {
         class="item"
         active-class="on"
         :title="collapsed ? t.label : undefined"
-        @click="emit('manual-nav')"
       >
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS[t.name]" /></svg>
         <span class="text label">{{ t.label }}</span>
       </RouterLink>
     </nav>
 
-    <div class="foot">
-      <button
-        class="carousel"
-        :class="{ on: autoplay }"
-        :title="`每页停留 ${CAROUSEL_SECONDS} 秒；键盘 ← → 或 1–4 也可切换`"
-        @click="autoplay = !autoplay"
-      >
-        <span class="dot" />
-        <span class="text">{{ autoplay ? '轮播中' : '自动轮播' }}</span>
-      </button>
-      <div class="updated text">
-        <div>数据更新 {{ dateTime(updated.data.value?.data_updated_at, true) }}</div>
-        <div>在线快照 {{ dateTime(updated.data.value?.ccu_updated_at) }}</div>
-      </div>
-    </div>
   </aside>
 </template>
 
@@ -230,11 +207,6 @@ const ICONS: Record<string, string> = {
   letter-spacing: 0.5px;
   color: var(--text-strong);
 }
-.brand-text .sub {
-  margin-top: 3px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 
 .nav {
   position: relative;
@@ -314,62 +286,4 @@ const ICONS: Record<string, string> = {
   font-weight: 600;
 }
 
-.foot {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.carousel {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
-  padding: 0 18px;
-  border-radius: 24px;
-  color: var(--text-primary);
-  font-size: var(--fs-body);
-  cursor: pointer;
-  background: linear-gradient(110deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  transition:
-    background 0.4s var(--ease-out),
-    border-color 0.4s var(--ease-out),
-    padding 0.6s var(--ease-out);
-}
-.collapsed .carousel {
-  padding: 0 21px;
-}
-.carousel:hover {
-  border-color: rgba(212, 214, 255, 0.3);
-}
-.carousel .dot {
-  width: 10px;
-  height: 10px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--text-secondary);
-  transition: background 0.4s var(--ease-out);
-}
-.carousel.on {
-  border-color: rgba(212, 214, 255, 0.4);
-  background: linear-gradient(110deg, rgba(163, 167, 240, 0.28), rgba(163, 167, 240, 0.06));
-}
-.carousel.on .dot {
-  background: var(--accent-bright);
-  box-shadow: 0 0 10px var(--accent);
-  animation: pulse 1.6s ease-in-out infinite;
-}
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-    transform: scale(0.8);
-  }
-}
-.updated {
-  padding: 0 8px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-}
 </style>

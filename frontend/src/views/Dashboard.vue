@@ -3,7 +3,7 @@
  * 大屏外壳：左侧可折叠导航 + 右侧主区（页标题、全局筛选、当前标签页的卡片）。
  * - 标签页是子路由（/overview、/market、/players、/hits），可以直接用链接打开某一页；
  * - 切页时标题和卡片用 CSS 动画依次落位（不依赖帧回调，见下方样式注释）；已打开过的页用 KeepAlive 缓存；
- * - 自动轮播：每页停留 CAROUSEL_SECONDS 秒，手动切页即停止；键盘 ← → / 1–4 切换；
+ * - 键盘 ← → / 1–4 切换标签页；
  * - 点左上角 Logo 折叠 / 展开导航（见 SideNav），状态记在浏览器本地，刷新后保持。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -13,14 +13,12 @@ import FilterBar from '@/components/dashboard/FilterBar.vue'
 import SideNav from '@/components/dashboard/SideNav.vue'
 import ScreenContainer from '@/components/layout/ScreenContainer.vue'
 
-import { CAROUSEL_SECONDS, TABS } from './tabs/registry'
+import { TABS } from './tabs/registry'
 
 defineOptions({ name: 'Dashboard' })
 
 const route = useRoute()
 const router = useRouter()
-const autoplay = ref(false)
-let timer: ReturnType<typeof setInterval> | null = null
 
 const COLLAPSE_KEY = 'steam-dashboard.nav-collapsed'
 function readCollapsed(): boolean {
@@ -51,11 +49,6 @@ function go(offset: number) {
   if (next) router.push(next.path)
 }
 
-watch(autoplay, (on) => {
-  if (timer) clearInterval(timer)
-  timer = on ? setInterval(() => go(1), CAROUSEL_SECONDS * 1000) : null
-})
-
 function onKey(e: KeyboardEvent) {
   const el = e.target as HTMLElement | null
   if (el && ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return
@@ -64,21 +57,17 @@ function onKey(e: KeyboardEvent) {
   else if (/^[1-9]$/.test(e.key)) {
     const t = TABS[Number(e.key) - 1]
     if (t) router.push(t.path)
-  } else return
-  autoplay.value = false
+  }
 }
 
 onMounted(() => window.addEventListener('keydown', onKey))
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKey)
-  if (timer) clearInterval(timer)
-})
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
   <ScreenContainer>
     <div class="shell">
-      <SideNav v-model:autoplay="autoplay" v-model:collapsed="collapsed" @manual-nav="autoplay = false" />
+      <SideNav v-model:collapsed="collapsed" />
 
       <section class="main">
         <header class="head">
@@ -98,7 +87,6 @@ onBeforeUnmount(() => {
         </main>
       </section>
 
-      <div v-if="autoplay" :key="route.path" class="progress" :style="{ animationDuration: `${CAROUSEL_SECONDS}s` }" />
     </div>
   </ScreenContainer>
 </template>
@@ -177,7 +165,7 @@ onBeforeUnmount(() => {
 }
 /* 切页动效：卡片一插入 DOM 就播放入场动画，同组卡片按顺序错开（KeepAlive 切回来时重新插入，动画会重播）。
    不用 <Transition mode="out-in">：它依赖 requestAnimationFrame 推进离场，浏览器在后台或被遮挡时
-   会暂停帧回调，旧页卡在离场、新页迟迟不挂载，轮播演示时就会出现空白页。
+   会暂停帧回调，旧页卡在离场、新页迟迟不挂载，就会出现空白页。
    fill-mode 用 backwards 而不是 both：动画结束后不再锁定 transform，卡片的悬停上浮才能生效。 */
 .content > :deep(*) {
   height: 100%;
@@ -195,24 +183,4 @@ onBeforeUnmount(() => {
   animation-delay: 0.24s;
 }
 
-/* 轮播进度条：贴在底边，跑满一条换下一页 */
-.progress {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  width: 100%;
-  transform-origin: 0 50%;
-  background: linear-gradient(90deg, transparent, var(--accent-bright));
-  box-shadow: 0 0 12px var(--accent-glow);
-  animation: progress linear forwards;
-}
-@keyframes progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
 </style>

@@ -13,6 +13,3 @@ export const TABS: TabDef[] = [
   { path: '/players', name: 'players', label: '玩家在想什么', hint: '口碑与行为' },
   { path: '/hits', name: 'hits', label: '什么游戏会火', hint: '热销与分群' },
 ]
-
-/** 自动轮播时每页停留的秒数 */
-export const CAROUSEL_SECONDS = 30
