@@ -63,3 +63,36 @@ src/
   components/charts/*.vue                每个看板模块一个组件
   views/Dashboard.vue、views/GameDetail.vue
 ```
+
+实际还有：
+
+| 位置 | 作用 |
+|---|---|
+| `src/charts/echarts.ts` | ECharts 按需注册（柱、线、树图、箱线、散点、热力图），并加载主题 |
+| `src/composables/useRemote.ts` | 每个图表的请求都走它：依赖（筛选条件）变化自动重新请求并取消上一个；失败时保留旧数据；后端不可用时按 5 / 15 / 30 / 60 秒自动重试，恢复后各图自己好起来 |
+| `src/theme/format.ts` | 数字与时间格式：亿 / 万、千分位、百分比、美元、UTC 转本地时间 |
+| `src/components/layout/Panel.vue` | 面板外壳：标题 + 单位与口径说明 + 右上角操作区 |
+| `src/components/dashboard/` | 顶栏（标题、全局筛选、更新时间）与 KPI 卡（数字滚动） |
+
+## 本地运行
+
+需要 Node `^20.19` 或 `>=22.12`（Vite 7 的要求）。先按 `backend/CLAUDE.md` 启动后端（默认 `127.0.0.1:8000`），再在 `frontend/` 下：
+
+```
+npm install        # 第一次
+npm run dev        # 开发服务器 http://127.0.0.1:5173，/api 自动代理到后端
+npm run build      # 类型检查（vue-tsc）+ 打包到 dist/
+npm run preview    # 预览打包结果
+```
+
+| 环境变量（可选，写在 `frontend/.env.local`） | 作用 |
+|---|---|
+| `VITE_BACKEND_URL` | 开发代理指向的后端地址，默认 `http://127.0.0.1:8000` |
+| `VITE_API_BASE` | 接口前缀，默认 `/api/v1`；前后端不同源部署时改成完整地址 |
+
+## 已验证的交互（2026-11-13，本机全量库）
+
+- 点树图「RPG」：下拉框同步为 RPG，其余可筛选图表按 RPG 重新请求，树图高亮 RPG；再点或点「重置」取消。
+- 点 Top10 条形 → `/game/:appid` 详情页；返回大屏时筛选状态保留（`KeepAlive`）。
+- Top10 切到「在线人数」：还没有在线快照聚合时显示空态。
+- 停掉后端：已有数据的图保留旧图并标「数据未更新」，没有数据的图显示错误与「重试」；后端恢复后自动重试成功，无需手动操作。
