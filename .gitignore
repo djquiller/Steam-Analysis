@@ -1,6 +1,5 @@
-# 密钥与个人配置
+# 密钥
 .env
-CLAUDE.local.md
 
 # Python
 __pycache__/
