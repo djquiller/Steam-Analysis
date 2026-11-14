@@ -1,6 +1,6 @@
 # storage/ — 数据库（数据侧）
 
-表结构以 `docs/schema.md` 为准；建库建表脚本是 `scripts/init_db.sql`。
+表结构以 `docs/schema.md` 为准；建库建表脚本是 `scripts/init_db.sql`。库划分、首次初始化、导入数据和服务器设置的具体步骤见 `storage/README.md`，本文件只写约定。
 
 ## 本机主库
 
