@@ -1,4 +1,4 @@
-# crawler/ — 采集（数据组）
+# crawler/ — 采集（数据侧）
 
 把数据从外部来源落到 MySQL `ods_*` 层。表结构以 `docs/schema.md` 为准；每个新数据源登记到 `docs/data-sources.md`（名称、链接、许可、下载/采集日期、行数）。
 
@@ -21,13 +21,35 @@
 - 原始响应原样写 `ods`，清洗留给 `analysis/`。
 - 每次运行打印并记录：来源、起止时间、请求数、失败数、入库行数——这些数字进入《数据质量报告》和答辩 PPT 的"数据来源与规模"页。
 - Steam API Key 与数据库连接（`etl_writer` 账号）只从 `.env` 读取。
+- Kaggle 令牌放在 `%USERPROFILE%\.kaggle\kaggle.json`，由 DJQuiller 本人放置；Claude 不读取其内容。
 
 ## 定时任务
 
 `GetNumberOfCurrentPlayers` 与价格快照由 APScheduler 常驻进程执行，体现"定时增量采集"加分项。部署说明里写清启动方式；答辩前确认快照已连续积累数天。
 
-## 待补（数据组填写）
+## Kaggle 数据集与字段映射
 
-- [ ] 选定的 Kaggle 数据集及其字段映射
+数据集登记见 `docs/data-sources.md`。原始 CSV 原样导入 `ods`，下表是 `analysis/` 清洗到 `dwd` 时的映射：
+
+| 源字段 | → `dwd` 字段 | 处理 |
+|---|---|---|
+| 游戏集 `appID` | `dwd_game.appid` | 转整数 |
+| `release_date`（如 `"Aug 1, 2023"`） | `release_date`、`release_year` | 按 `%b %d, %Y` 解析，失败的不进 `ads` |
+| `price` | `price_usd`、`price_bucket` | 已是美元 |
+| `estimated_owners`（如 `"20000 - 50000"`） | `owners_mid` | 取区间中值 |
+| `positive` / `negative` | 同名 | — |
+| `average_playtime_forever` | `avg_playtime_min` | 单位：分钟 |
+| `genres`（列表） | `dwd_game_genre` | 拆行 |
+| `developers` / `publishers`（列表） | `developer` / `publisher` | 取第一个 |
+| 评论集 `review_id` / `app_id` / `language` | 同名 / `appid` / 同名 | — |
+| `timestamp_created`（Unix 秒） | `timestamp_created` | 转 UTC `DATETIME` |
+| `recommended` | `voted_up` | 与 `appreviews` 接口的 `voted_up` 同义 |
+| `author.playtime_at_review` | `playtime_at_review_min` | 单位：分钟 |
+
+评论集只到 2021 年初、只覆盖约 200 款游戏。为此，`appreviews` 增量采集按拥有者排序取 Top 300 游戏，补采 2021 年之后的评论。
+
+## 待补
+
+- [x] 选定的 Kaggle 数据集及其字段映射（见上节；下载后核对列名和许可）
 - [ ] 各脚本入口与运行命令
 - [ ] 实测限流与总采集耗时

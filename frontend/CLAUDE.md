@@ -1,4 +1,4 @@
-# frontend/ — Vue 大屏（可视化组）
+# frontend/ — Vue 大屏（可视化侧）
 
 数据只从后端 API 取，接口与返回结构以 `docs/api.md` 为准；字段口径（单位、估算方式）见 `docs/schema.md`，图表上的单位与口径说明从那里取。
 
@@ -24,7 +24,7 @@
 
 ## 交互（三层都要做）
 
-1. **全局筛选**：状态集中在 Pinia `stores/filters.ts`；筛选变化时所有可筛选图表重新请求。
+1. **全局筛选**：状态集中在 Pinia `stores/filters.ts`；筛选变化时所有可筛选图表重新请求。价格区间用 5 个档位的多选控件，不用连续滑块（与 `docs/api.md` 的 `price_bucket` 参数一致）。
 2. **图表联动**：点击树图的某个类型 → 写入 `filters.genre` → 其他图表随之过滤；再次点击或点"重置"取消。
 3. **下钻**：点击 Top10 条目或聚类散点 → 路由到 `/game/:appid`。
 
@@ -52,6 +52,8 @@
 ECharts 主题在 `src/theme/steam-dark.ts` 中 `registerTheme`，CSS 变量在 `src/theme/tokens.css`。
 
 ## 目录约定
+
+`index.html` 写 `<meta charset="UTF-8">`。
 
 ```
 src/
