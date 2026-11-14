@@ -35,12 +35,12 @@
 
 | 层 | 选型 |
 |---|---|
-| 采集 | Python 3.11 + requests/httpx + APScheduler |
+| 采集 | Python 3.14 + requests/httpx + APScheduler |
 | 存储 | MySQL 8，数仓分层 `ods → dwd → ads` |
 | 挖掘 | pandas + numpy + scikit-learn |
 | 后端 | FastAPI + SQLAlchemy + pydantic-settings + pytest |
 | 前端 | Vue 3 + Vite + TypeScript + ECharts 5 + Pinia + axios |
-| 环境 | Python 3.11、Node 20 LTS；Docker 选做 |
+| 环境 | Python 3.14（Anaconda 发行版；pandas 3.x、numpy 2.x、scikit-learn 1.9）、Node 20 LTS；Docker 选做 |
 
 ## 仓库结构
 
