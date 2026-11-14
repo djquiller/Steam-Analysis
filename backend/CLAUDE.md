@@ -1,4 +1,4 @@
-# backend/ — FastAPI 服务（可视化组）
+# backend/ — FastAPI 服务（可视化侧）
 
 为大屏提供 REST API。返回信封、错误码、筛选参数、接口清单的唯一来源是 `docs/api.md`；所读表的字段与口径见 `docs/schema.md`。
 
@@ -17,7 +17,7 @@ backend/tests/      pytest
 
 ## 约定
 
-- 只用 `api_reader` 账号连库，只读 `dwd_*` / `ads_*`。重计算缺失时找数据组补 `ads` 表，接口里只做过滤、`SUM … GROUP BY` 再汇总、排序、分页。
+- 只用 `api_reader` 账号连库，只读 `dwd_*` / `ads_*`。缺少的重计算先在 `analysis/` 里补成 `ads` 表，接口里只做过滤、`SUM … GROUP BY` 再汇总、排序、分页。
 - 全局筛选参数解析集中在一处（如 `services/filters.py`），所有可筛选接口复用。这里统一处理两件事：
   - 没传 `genre` 时，聚合表加条件 `genre = '__ALL__'`；游戏粒度表在传了 `genre` 时才关联 `dwd_game_genre`（规则见 `docs/schema.md`"筛选维度约定"）；
   - `price_bucket` 按逗号拆开，校验取值后生成 `IN (...)` 条件。
@@ -32,4 +32,4 @@ pytest 对每个接口覆盖三种情况：正常数据、空数据、非法参�
 
 ## 本地运行
 
-`.env` 中 `DB_HOST` 指向本机样本库或数据组主库（地址写在 `CLAUDE.local.md`）。启动命令与端口在实现后补充到此处和部署文档。
+`.env` 中 `DB_HOST` 指向本机样本库或本机全量主库（见根目录 `CLAUDE.md`"数据库与本机环境"）。启动命令与端口在实现后补充到此处和部署文档。
