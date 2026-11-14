@@ -1,4 +1,4 @@
-# storage/ — 数据库初始化（数据组）
+# storage/ — 数据库初始化（数据侧）
 
 表结构以 `docs/schema.md` 为准；建库建表脚本是 `scripts/init_db.sql`。
 
@@ -31,7 +31,7 @@
          CREATE VIEW, SHOW VIEW, CREATE TEMPORARY TABLES
      ON steam.* TO 'etl_writer'@'localhost';
 
-   -- 后端只读账号：允许局域网连接（可视化组的电脑）
+   -- 后端只读账号：主机写 '%' 以便日后从其他电脑连接；目前后端只在本机运行
    CREATE USER IF NOT EXISTS 'api_reader'@'%' IDENTIFIED BY '<api 密码>';
    GRANT SELECT ON steam.* TO 'api_reader'@'%';
    ```
