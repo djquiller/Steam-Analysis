@@ -1,4 +1,4 @@
-# storage/ — 数据库初始化（数据组）
+# storage/ — 数据库初始化（数据侧）
 
 表结构以 `docs/schema.md` 为准；建库建表脚本是 `scripts/init_db.sql`。
 
@@ -31,7 +31,7 @@
          CREATE VIEW, SHOW VIEW, CREATE TEMPORARY TABLES
      ON steam.* TO 'etl_writer'@'localhost';
 
-   -- 后端只读账号：允许局域网连接（可视化组的电脑）
+   -- 后端只读账号：主机写 '%' 以便日后从其他电脑连接；目前后端只在本机运行
    CREATE USER IF NOT EXISTS 'api_reader'@'%' IDENTIFIED BY '<api 密码>';
    GRANT SELECT ON steam.* TO 'api_reader'@'%';
    ```
@@ -49,7 +49,7 @@
 python scripts/load_data.py
 ```
 
-它会依次导入游戏集，再逐个处理评论的 13 个分片。每个分片依次执行：下载约 1.9 GB → 导入 `ods` → 抽样原文 → 清洗到 `dwd` → 删除分片文件。每个分片大约 10–12 分钟，全部跑完约 2–3 小时。
+它会依次导入游戏集，再逐个处理评论的 13 个分片。每个分片依次执行：下载约 1.9 GB → 导入 `ods` → 抽样原文 → 清洗到 `dwd` → 删除分片文件。实测每个分片 6–18 分钟（表越大越慢），全部跑完约 3 小时，占用磁盘约 33 GB（数据库所在的盘）。
 
 | 想做的事 | 命令 |
 |---|---|

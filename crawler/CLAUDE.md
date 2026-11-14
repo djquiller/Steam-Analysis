@@ -1,4 +1,4 @@
-# crawler/ — 采集（数据组）
+# crawler/ — 采集（数据侧）
 
 把数据从外部来源落到 MySQL `ods_*` 层。表结构以 `docs/schema.md` 为准；每个新数据源登记到 `docs/data-sources.md`（名称、链接、许可、下载/采集日期、行数）。
 
@@ -59,13 +59,27 @@
 |---|---|---|
 | `crawler/kaggle_games.py` | 下载 `games.csv` 并导入 `ods_game_kaggle` | `python -m crawler.kaggle_games` |
 | `crawler/kaggle_reviews.py` | 逐片下载评论分片并导入 `ods_review_kaggle` | `python -m crawler.kaggle_reviews --shards 0-12 --delete-after` |
+| `crawler/kaggle_review_text.py` | 评论原文按游戏分层抽样（每款最多 30 条），写入 `ods_review_text_sample` | `python -m crawler.kaggle_review_text --shard 0 --k 30` |
+| `scripts/load_data.py` | 一键流水线：游戏集 + 13 个评论分片，逐片下载 → `ods` → 抽样 → `dwd`，可断点续跑 | `python scripts/load_data.py` |
 
 公共模块在 `crawler/common/`：`settings.py`（读 `.env`）、`db.py`（`etl_writer` 连接）、`runlog.py`（运行记录）。
 
-**实测（2026-11-12，本机 i7-14650HX / 32 GB / NVMe）**：游戏集 125,855 行导入用时 22 秒；评论第 0 片 1000 万行导入用时 138 秒（每百万行约 14 秒）；Kaggle 下载速度约 5 MB/s，一个分片约 6 分钟。
+**实测（2026-11-12 全量，本机 i7-14650HX / 32 GB / NVMe）**
 
-## 待补（数据组填写）
+| 项 | 数值 |
+|---|---|
+| 游戏集 | 125,855 行，导入 22 秒 |
+| 评论元数据 | 13 个分片共 121,312,346 行，全部进入 `ods_review_kaggle`，与数据集说明的总数一致 |
+| 评论导入耗时 | 累计 57.5 分钟；第 0 片 138 秒，表变大后逐片变慢，第 11 片 522 秒 |
+| 原文抽样 | 保留 2,335,697 条，覆盖 124,757 款游戏、31 种语言，每款最多 30 条；累计 18.7 分钟 |
+| 下载 | 5–27 MB/s，一个分片 1–6 分钟；经过代理时出现过一次连接半断（见 `storage/README.md`） |
+| 占用（`steam_ods`） | 约 20 GB：评论元数据约 16 GB，原文样本约 3 GB，游戏约 0.7 GB |
+
+## 待补
 
 - [x] 选定的 Kaggle 数据集及其字段映射（见上节；下载后核对列名和许可）
 - [x] 各脚本入口与运行命令（见上节）
+- [x] Kaggle 游戏集与评论集全量导入 `ods`（2026-11-12 完成，数字见上节）
+- [x] 申请 Steam Web API Key 并填入 `.env`（2026-11-12 已校验可用）
+- [ ] 在线人数与价格的定时采集（APScheduler）
 - [ ] 实测 Steam / SteamSpy 接口限流与总采集耗时
