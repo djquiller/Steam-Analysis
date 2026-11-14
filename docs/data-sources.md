@@ -9,7 +9,7 @@
 | Steam Store `appdetails` | https://store.steampowered.com/api/appdetails | Steam 订户协议 / API 使用条款 | API 增量 | | | `ods_app_detail` |
 | SteamSpy | https://steamspy.com/api.php | SteamSpy 公开 API | API 增量 | | | `ods_steamspy` |
 | Steam `appreviews` | https://store.steampowered.com/appreviews/{appid} | Steam API 使用条款 | API 增量 | | | `ods_review_api` |
-| `GetNumberOfCurrentPlayers` | https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/ | Steam Web API 条款 | 定时任务（每小时） | | | `ods_ccu_snapshot` |
+| `GetNumberOfCurrentPlayers` | https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/ | Steam Web API 条款 | 定时任务（每小时） | 2026-11-12 起 | 首轮 708 行（708 款全部取到，UTC 22:00 这一小时）；之后每小时约增加 708 行 | `ods_ccu_snapshot` → `dwd_ccu_snapshot` |
 
 ## 已知局限
 

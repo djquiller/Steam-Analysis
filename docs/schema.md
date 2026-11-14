@@ -47,6 +47,7 @@
 |---|---|---|
 | `ods_game_kaggle` | Kaggle 游戏集 `games.csv` | 40 列原样落库（列名转为 snake_case），PK `app_id` |
 | `ods_review_kaggle` | Kaggle 评论集 `reviews-*.parquet` | 只保留分析用字段，**不存评论原文和评论者 ID**；`src_shard` 记录来源分片，便于按分片重跑；PK `review_id` |
+| `ods_ccu_snapshot` | `GetNumberOfCurrentPlayers`，每小时一轮 | 游戏 × 整点，PK `(appid, snapshot_at)`。`snapshot_at`（UTC，本轮开始时刻向下取整到整点）、`fetched_at`（UTC，实际请求时刻）、`http_status`、`attempts`、`raw_body`（响应正文原样）、`error`、`player_count`。**失败的请求也留一行**（`player_count` 为 NULL），用于统计哪些 appid 取不到；同一小时重跑只覆盖不新增，已成功的行不会被失败结果覆盖 |
 
 ## dwd 层（明细）
 
@@ -55,7 +56,8 @@
 | `dwd_game` | 一款游戏一行 | `appid` PK, `name`, `release_date`, `release_year`, `price_usd`, `price_bucket`, `owners_low`/`owners_high`/`owners_mid`, `peak_ccu`, `positive`, `negative`, `avg_playtime_min`, `median_playtime_min`, `developer`, `publisher`, `header_image`；热销预测用的发行前特征：`required_age`, `dlc_count`, `achievements`, `num_languages`, `on_windows`/`on_mac`/`on_linux`, `metacritic_score`。索引 `(release_year, price_bucket)` |
 | `dwd_game_genre` | 游戏 × 类型 | `appid`, `genre` |
 | `dwd_review` | 一条评论一行 | PK `(appid, review_id)`，聚簇主键让同一游戏的评论物理相邻；`language`, `voted_up`, `playtime_at_review_min`, `timestamp_created`（UTC） |
-| `dwd_ccu_snapshot` | 游戏 × 采集时刻 | `appid`, `snapshot_at`, `player_count` |
+| `dwd_ccu_snapshot` | 游戏 × 采集时刻 | PK `(appid, snapshot_at)`，索引 `(snapshot_at)`；`snapshot_at`（UTC 整点，与 `ods_ccu_snapshot` 同口径）、`player_count`（非空）。只含取到人数的行；同一小时重跑覆盖，不产生重复行。只覆盖 `dwd_ccu_watchlist` 里的游戏 |
+| `dwd_ccu_watchlist` | 采集名单，一款游戏一行 | `appid` PK, `peak_ccu_rank`、`owners_rank`（在各自前 500 里的名次，没进为 NULL）, `refreshed_at`（UTC）。名单 = `dwd_game` 中 `peak_ccu` 前 500 ∪ `owners_mid` 前 500；并列时的次序：`peak_ccu` 榜按 `peak_ccu` 降序 → `appid` 升序，`owners_mid` 榜按 `owners_mid` 降序 → `peak_ccu` 降序 → `appid` 升序。每天整表重建一次 |
 | `dwd_price_history` | 游戏 × 采集日期 | `appid`, `snapshot_date`, `price_usd`（详情页价格历史；仅增量采集后有数据） |
 
 ## ads 层（聚合 / 模型结果）
