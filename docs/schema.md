@@ -50,6 +50,19 @@
 | `ods_game_kaggle` | Kaggle 游戏集 `games.csv` | 40 列原样落库（列名转为 snake_case），PK `app_id` |
 | `ods_review_kaggle` | Kaggle 评论集 `reviews-*.parquet` | 只保留分析用字段，**不存评论原文和评论者 ID**；`src_shard` 记录来源分片，便于按分片重跑；PK `review_id` |
 
+### 中间表（`steam_ods.stg_review_*`）
+
+评论侧 `ads` 的加工中间结果，由 `analysis/build_ads_review.py` 每次全量重建（建表语句也在该脚本里），后端不读。放在 `steam_ods` 里，`api_reader` 看不到。四张表都是"游戏 × 某个维度"的评论计数，**不做任何过滤**（含不在 `dwd_game` 里的 appid），所以每张表的 `review_cnt` 合计都等于 `dwd_review` 的行数。
+
+| 表 | 主键 | 计数列 | 用途 |
+|---|---|---|---|
+| `stg_review_lang` | `(appid, language)` | `review_cnt`, `positive_cnt` | → `ads_review_lang`；KPI 评论总数 |
+| `stg_review_playtime` | `(appid, playtime_bin)` | `review_cnt` | → `ads_playtime_dist`；`playtime_bin` 同 `ads_playtime_dist`，另用 `255` 表示时长缺失（不进 `ads`） |
+| `stg_review_hour` | `(appid, weekday, hour)` | `review_cnt` | → `ads_review_heatmap` |
+| `stg_review_month` | `(appid, month_start)` | `review_cnt`, `positive_cnt` | → `ads_game_review_trend` |
+
+先压到游戏粒度再关联类型，是为了不让 1.21 亿行评论直接关联 `dwd_game_genre`（多类型会膨胀约三倍）。《数据质量报告》也从这几张表取评论侧的统计，不必再扫评论表。
+
 ## dwd 层（明细）
 
 | 表 | 粒度 | 关键字段 |

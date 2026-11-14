@@ -25,7 +25,7 @@ ads_kpi_overview 和 ads_meta 是与其他脚本共用的表，本脚本只更�
 
 留给后续（这次只建了表，没有数据）：
 - 评论侧聚合（需要 dwd_review）：ads_review_lang、ads_playtime_dist、ads_review_heatmap、
-  ads_game_review_trend，以及 ads_kpi_overview.review_cnt；
+  ads_game_review_trend，以及 ads_kpi_overview.review_cnt —— 已由 analysis/build_ads_review.py 完成；
 - 定时任务（需要 dwd_ccu_snapshot）：ads_ccu_latest、ads_kpi_overview.online_peak_24h / online_peak_at，
   以及每小时更新 ads_top_sellers.ccu_latest / ccu_at；
 - 建模：ads_game_cluster、ads_hot_pred、ads_model_metrics、ads_review_sentiment。
