@@ -1,4 +1,4 @@
-# analysis/ — 清洗、聚合、建模（数据组）
+# analysis/ — 清洗、聚合、建模（数据侧）
 
 负责 `ods → dwd → ads` 的全部加工，用 `etl_writer` 账号写库。字段与口径的唯一来源是 `docs/schema.md`；新增或修改表先走契约 PR。
 
@@ -45,10 +45,22 @@
 | `analysis/build_dwd_review.py` | `ods_review_kaggle` → `dwd_review`（按分片，`INSERT … SELECT`） | `python -m analysis.build_dwd_review --shards 0-12` |
 | `analysis/build_ads_game.py` | `dwd_game` + `dwd_game_genre` → 只依赖游戏表的 `ads` 表：`ads_yearly_release`、`ads_genre_heat`、`ads_rating_dist`、`ads_top_sellers`（拥有者口径），并更新 `ads_kpi_overview` 的游戏侧两列和 `ads_meta`。全量重建，单事务，提交前自动核对总数。依赖评论表、在线快照、模型的 `ads` 表不在此脚本内 | `python -m analysis.build_ads_game` |
 
-**实测（2026-11-12）**：游戏清洗 12.6 秒，得到 125,854 款游戏、338,583 条游戏 × 类型、33 种类型；评论第 0 片清洗 141 秒，1000 万行无丢弃。
+**实测（2026-11-12 全量）**
 
-## 待补（数据组填写）
+| 项 | 数值 |
+|---|---|
+| 游戏清洗 | 12.6 秒，得到 125,854 款游戏、338,583 条游戏 × 类型、33 种类型 |
+| 评论清洗 | `dwd_review` 共 121,312,346 行，与 `ods` 行数一致，无丢弃；累计 56.9 分钟（第 0 片 143 秒，第 10 片 415 秒） |
+| 评论涉及的游戏 | 124,757 个 appid；其中 108,562 个在 `dwd_game` 里，16,195 个不在（聚合时关联 `dwd_game`，这部分不进 `ads`） |
+| 游戏覆盖 | `dwd_game` 125,854 款中 108,562 款有评论（86.3%）；Steam 计数评论 ≥ 10 条的 56,662 款中 54,716 款有评论（96.6%） |
+| 与 Steam 计数对比 | 入库 121,312,346 条，是游戏集里好评 + 差评合计 148,894,107 的 81.5% |
+| 占用（`steam`） | 约 13 GB，几乎全部是 `dwd_review` |
+
+## 待补
 
 - [x] "热销"标签的最终定义（见上节）
 - [ ] 聚类最终 K 值与各簇业务含义（方法已定，数值待全量数据）
 - [x] 各脚本入口与运行命令（见上节）
+- [x] 游戏与评论全量清洗到 `dwd`（2026-11-12 完成，数字见上节）
+- [ ] 生成 `ads` 聚合表（游戏侧已写好，在单独分支上等 Review；评论侧未开始）
+- [ ] 数据质量报告 `analysis/reports/data_quality.md`
