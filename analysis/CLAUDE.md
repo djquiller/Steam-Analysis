@@ -44,6 +44,8 @@
 | `analysis/build_dwd_game.py` | `ods_game_kaggle` → `dwd_game` + `dwd_game_genre`（全量重建） | `python -m analysis.build_dwd_game` |
 | `analysis/build_dwd_review.py` | `ods_review_kaggle` → `dwd_review`（按分片，`INSERT … SELECT`） | `python -m analysis.build_dwd_review --shards 0-12` |
 | `analysis/build_ads_game.py` | `dwd_game` + `dwd_game_genre` → 只依赖游戏表的 `ads` 表：`ads_yearly_release`、`ads_genre_heat`、`ads_rating_dist`、`ads_top_sellers`（拥有者口径），并更新 `ads_kpi_overview` 的游戏侧两列和 `ads_meta`。全量重建，单事务，提交前自动核对总数。依赖评论表、在线快照、模型的 `ads` 表不在此脚本内 | `python -m analysis.build_ads_game` |
+| `analysis/build_ads_review.py` | `dwd_review` → 依赖评论表的 `ads` 表：`ads_review_lang`、`ads_playtime_dist`、`ads_review_heatmap`、`ads_game_review_trend`，并更新 `ads_kpi_overview.review_cnt` 和 `ads_meta`。分两步：先按 appid 区间分块，把 1.21 亿行评论压成四张"游戏 × 维度"的中间表 `steam_ods.stg_review_*`（READ COMMITTED、每块单独提交）；再在一个事务里由中间表关联游戏与类型写入 `ads`，提交前核对中间表合计与直接扫 `dwd_review` 的结果、`ads` 与中间表的合计。`--reuse-stage` 跳过第一步 | `python -m analysis.build_ads_review` |
+| `analysis/build_quality_report.py` | 直接查库生成《数据质量报告》`analysis/reports/data_quality.md`：规模验收、各层行数与剔除原因、缺失率、唯一性、异常值、一致性核对。评论侧统计取自上面的中间表，只有清洗规则命中数要扫一遍 `ods_review_kaggle`。需先跑 `build_ads_review` | `python -m analysis.build_quality_report` |
 
 **实测（2026-11-12 全量）**
 
@@ -56,11 +58,21 @@
 | 与 Steam 计数对比 | 入库 121,312,346 条，是游戏集里好评 + 差评合计 148,894,107 的 81.5% |
 | 占用（`steam`） | 约 13 GB，几乎全部是 `dwd_review` |
 
+**实测（2026-11-14，评论侧 ads 与质量报告）**
+
+| 项 | 数值 |
+|---|---|
+| `build_ads_review` 第一步 | 24 块，495 秒；中间表 `stg_review_lang` 94.5 万行、`stg_review_playtime` 60.8 万行、`stg_review_hour` 594 万行、`stg_review_month` 271 万行，四张表合计都是 121,312,346 |
+| `build_ads_review` 第二步 | 229 秒：直接扫 `dwd_review` 取核对基准 65 秒，`ads_review_heatmap` 129 秒（中间表最大、关联类型后约 2200 万行再分组），其余三张表合计约 26 秒 |
+| 评论侧 `ads` 行数 | `ads_review_lang` 28,071；`ads_playtime_dist` 11,182；`ads_review_heatmap` 165,977；`ads_game_review_trend` 2,658,672 |
+| 进入 `ads` 的评论 | 117,777,463 条（所评游戏不在游戏集里的 3,534,859 条、所评游戏未发行的 24 条不进）；16 项核对全部一致 |
+| `build_quality_report` | 约 100 秒，其中扫 `ods_review_kaggle` 一遍约占一半 |
+
 ## 待补
 
 - [x] "热销"标签的最终定义（见上节）
 - [ ] 聚类最终 K 值与各簇业务含义（方法已定，数值待全量数据）
 - [x] 各脚本入口与运行命令（见上节）
 - [x] 游戏与评论全量清洗到 `dwd`（2026-11-12 完成，数字见上节）
-- [ ] 生成 `ads` 聚合表（游戏侧已写好，在单独分支上等 Review；评论侧未开始）
-- [ ] 数据质量报告 `analysis/reports/data_quality.md`
+- [x] 生成 `ads` 聚合表（游戏侧、评论侧已写好，各在单独分支上等 Review）
+- [x] 数据质量报告 `analysis/reports/data_quality.md`（脚本生成，数据变了就重跑）
