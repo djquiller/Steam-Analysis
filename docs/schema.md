@@ -1,12 +1,12 @@
 # 数据表契约（schema）
 
-> **维护方：数据组**。本文件是全部表结构的唯一权威来源。修改流程：PR 中同时提交 `storage/migrations/V{n}__描述.sql`，由可视化组 Review 后合并，合并后才在主库执行迁移并更新 `storage/sample/`。
+> **维护：DJQuiller；Review：Mili**。本文件是全部表结构的唯一权威来源。修改流程：PR 中同时提交 `storage/migrations/V{n}__描述.sql`，经 Mili Review 后合并，合并后才在主库执行迁移并更新 `storage/sample/`。
 >
 > 状态：**草案 v0.3**。全部 `ads_*` 表的字段、类型、主键和口径已补全，建表语句已并入 `scripts/init_db.sql`。`ads` 表是首次建表（此前库里没有），语句全部是 `CREATE TABLE IF NOT EXISTS`，所以本次不另附迁移脚本；此后再改 `ads` 字段，照常附 `storage/migrations/V{n}__描述.sql`。
 >
-> v0.3 变更（由可视化组暂代数据组修订，待数据组成员 Review）：补全 15 张 `ads` 表的字段；写明价格区间的边界；`ads_genre_heat` 增加好评数，`ads_review_lang` 增加好评数；`ads_top_sellers` 收录全部有发行年份的游戏；`/meta/filters` 改读 `ads_yearly_release`。
+> v0.3 变更（DJQuiller 修订，待 Mili Review）：补全 15 张 `ads` 表的字段；写明价格区间的边界；`ads_genre_heat` 增加好评数，`ads_review_lang` 增加好评数；`ads_top_sellers` 收录全部有发行年份的游戏；`/meta/filters` 改读 `ads_yearly_release`。
 >
-> v0.2 变更（M2 阶段由可视化组暂代数据组修订，待数据组成员 Review）：类型维度加 `__ALL__` 汇总行，避免多类型游戏重复计数；游戏粒度表通过 `dwd_game_genre` 筛选类型；删除 `ads_price_rating`，箱线图改由 1% 分箱的 `ads_rating_dist` 推算；注明随快照刷新的表。
+> v0.2 变更（DJQuiller 修订，待 Mili Review）：类型维度加 `__ALL__` 汇总行，避免多类型游戏重复计数；游戏粒度表通过 `dwd_game_genre` 筛选类型；删除 `ads_price_rating`，箱线图改由 1% 分箱的 `ads_rating_dist` 推算；注明随快照刷新的表。
 
 ## 全局口径
 
@@ -23,7 +23,7 @@
 
 ## 筛选维度约定
 
-可视化组的全局筛选为 **年份 / 类型 / 价格区间**。凡需响应筛选的 `ads_*` 表，必须保留 `release_year`、`genre`、`price_bucket` 三列作为聚合粒度，后端用 `WHERE` 过滤后再 `SUM … GROUP BY` 小表汇总。不响应筛选的表在下方标注"全局"。
+大屏的全局筛选为 **年份 / 类型 / 价格区间**。凡需响应筛选的 `ads_*` 表，必须保留 `release_year`、`genre`、`price_bucket` 三列作为聚合粒度，后端用 `WHERE` 过滤后再 `SUM … GROUP BY` 小表汇总。不响应筛选的表在下方标注"全局"。
 
 一款游戏只属于一个年份、一个价格区间，所以这两个维度可以直接求和；但一款游戏可以属于多个类型，直接对 `genre` 求和会重复计数。因此分两类处理：
 
