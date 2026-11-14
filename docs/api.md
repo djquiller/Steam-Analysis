@@ -4,6 +4,8 @@
 >
 > 状态：**草案 v0.3**。每个接口 `data` 的结构已补全，字段与 `docs/schema.md` v0.3 的 `ads` 表一一对应。老师尚未下发"标准数据契约"，下发后逐字段对齐并更新本文件。
 >
+> v0.3.1 变更：写明各错误码对应的 HTTP 状态码；新增 `GET /health`。16 个接口已在 `backend/` 实现，运行时 Swagger 见 `http://127.0.0.1:8000/docs`。
+>
 > v0.3 变更：补全各接口 `data` 的结构；`/meta/filters` 改读 `ads_yearly_release`；`/trend/genres` 不响应 `genre` 参数；`/rank/online-live`、`/cluster/games`、`/ecosystem/rating-dist`、`/ecosystem/review-languages` 增加可选参数；`/games/{appid}` 增加同类对比。
 >
 > v0.2 变更：价格筛选由 `price_min`/`price_max` 改为按档位多选的 `price_bucket`；`/trend/price-rating` 改读 `ads_rating_dist`；注明游戏粒度接口如何按类型筛选。
@@ -14,12 +16,16 @@
 { "code": 0, "msg": "ok", "data": {} }
 ```
 
-| code | 含义 |
-|---|---|
-| `0` | 成功（含空结果：`data` 为空数组/空对象，前端显示空态） |
-| `40001` | 参数错误 |
-| `40401` | 资源不存在（如 appid 不存在） |
-| `50001` | 数据库异常 |
+| code | HTTP 状态码 | 含义 |
+|---|---|---|
+| `0` | 200 | 成功（含空结果：`data` 为空数组/空对象，前端显示空态） |
+| `40001` | 400 | 参数错误（取值越界、类型不对、`genre` 不在 `/meta/filters` 里等），`msg` 写明是哪个参数 |
+| `40401` | 404 | 资源不存在（如 appid 不存在、接口路径不存在） |
+| `50001` | 500 | 数据库异常（连不上、查询出错），`msg` 不含 SQL 与连接信息，详情只记在后端日志 |
+
+出错时 `data` 为 `null`。HTTP 状态码与 `code` 同时设置；前端 axios 拦截器在成功和失败两条分支里都读响应体的 `code` 与 `msg`。
+
+另有 `GET /health`（不带 `/api/v1` 前缀、不查库）供部署时检查服务是否启动，返回 `{"code":0,"msg":"ok","data":{"status":"up"}}`。
 
 ## 全局筛选参数
 
