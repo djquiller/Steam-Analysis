@@ -1,7 +1,7 @@
 -- =====================================================================
 -- 建库建表脚本（可重复执行）
 --
--- 做什么：创建两个库和 ods / dwd 两层的表。ads 层在聚合阶段另建。
+-- 做什么：创建两个库和 ods / dwd / ads 三层的表。
 -- 为什么分两个库：
 --   steam_ods  原始数据层，只有 ETL（etl_writer）读写；
 --   steam      dwd 明细层 + ads 聚合层，后端 api_reader 对整个库只有 SELECT。
@@ -224,3 +224,191 @@ CREATE TABLE IF NOT EXISTS dwd_price_history (
   PRIMARY KEY (appid, snapshot_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='价格历史（仅增量采集后有数据）';
+
+-- ---------------------------------------------------------------------
+-- ads 层：面向大屏的聚合表与模型结果表（字段口径见 docs/schema.md）
+--
+-- 聚合表的主键以 (release_year, genre, price_bucket) 开头：后端按这三列过滤后
+-- 再 SUM … GROUP BY。genre = '__ALL__' 是预先算好的汇总行，每款游戏只计一次，
+-- 用来避免多类型游戏按类型相加时重复计数。
+-- 聚合表只存计数和合计（可以相加），均价、好评率、分位数由后端现算。
+-- ---------------------------------------------------------------------
+
+-- KPI 卡：固定只有 id = 1 一行；不同来源的列由不同脚本各自更新。
+CREATE TABLE IF NOT EXISTS ads_kpi_overview (
+  id               TINYINT UNSIGNED NOT NULL COMMENT '固定为 1',
+  game_cnt         INT UNSIGNED     NOT NULL COMMENT '游戏总数（款）：有发行年份的游戏',
+  review_cnt       BIGINT UNSIGNED           COMMENT '评论总数（条）：dwd_review 行数；评论侧聚合前为 NULL',
+  owners_total     BIGINT UNSIGNED  NOT NULL COMMENT '估算玩家总量（份）：owners_mid 之和，同一玩家多款游戏重复计',
+  online_peak_24h  INT UNSIGNED              COMMENT '近 24 小时采集名单内游戏在线人数之和的最大值（人）',
+  online_peak_at   DATETIME                  COMMENT '峰值出现的采集时刻，UTC',
+  updated_at       DATETIME         NOT NULL COMMENT 'UTC',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='KPI 概览（单行）';
+
+CREATE TABLE IF NOT EXISTS ads_yearly_release (
+  release_year  SMALLINT       NOT NULL,
+  genre         VARCHAR(64)    NOT NULL COMMENT '类型名或 __ALL__',
+  price_bucket  VARCHAR(8)     NOT NULL,
+  game_cnt      INT UNSIGNED   NOT NULL COMMENT '发行量（款）',
+  price_sum     DECIMAL(14,2)  NOT NULL COMMENT '价格合计（美元），均价 = price_sum / game_cnt',
+  PRIMARY KEY (release_year, genre, price_bucket)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='历年发行量与价格合计';
+
+-- 本身按类型展示，不设 __ALL__ 行。
+CREATE TABLE IF NOT EXISTS ads_genre_heat (
+  release_year  SMALLINT         NOT NULL,
+  genre         VARCHAR(64)      NOT NULL,
+  price_bucket  VARCHAR(8)       NOT NULL,
+  game_cnt      INT UNSIGNED     NOT NULL COMMENT '游戏数（款），多类型游戏在每个类型下各计一次',
+  owners_sum    BIGINT UNSIGNED  NOT NULL COMMENT 'owners_mid 之和（份）',
+  review_cnt    BIGINT UNSIGNED  NOT NULL COMMENT 'positive + negative 之和（条），Steam 官方总数',
+  positive_cnt  BIGINT UNSIGNED  NOT NULL COMMENT 'positive 之和（条）',
+  PRIMARY KEY (release_year, genre, price_bucket)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='类型热度';
+
+-- 游戏粒度：收录全部有发行年份的游戏，任意筛选组合下的 Top N 都精确。
+-- 筛类型时后端用 EXISTS 关联 dwd_game_genre。
+CREATE TABLE IF NOT EXISTS ads_top_sellers (
+  appid         INT UNSIGNED   NOT NULL,
+  name          VARCHAR(512)   NOT NULL,
+  release_year  SMALLINT       NOT NULL,
+  price_bucket  VARCHAR(8)     NOT NULL,
+  price_usd     DECIMAL(10,2)  NOT NULL,
+  owners_mid    INT UNSIGNED            COMMENT '拥有者（份），SteamSpy 区间中值',
+  review_cnt    INT UNSIGNED   NOT NULL COMMENT 'positive + negative（条）',
+  positive_cnt  INT UNSIGNED   NOT NULL COMMENT 'positive（条）',
+  peak_ccu      INT UNSIGNED            COMMENT '历史峰值在线（人）',
+  ccu_latest    INT UNSIGNED            COMMENT '最新采集时刻的在线人数（人），每小时更新',
+  ccu_at        DATETIME                COMMENT 'ccu_latest 的采集时刻，UTC',
+  PRIMARY KEY (appid),
+  KEY idx_owners (owners_mid, review_cnt),
+  KEY idx_ccu (ccu_latest),
+  KEY idx_year_bucket (release_year, price_bucket)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='热销榜（游戏粒度）';
+
+CREATE TABLE IF NOT EXISTS ads_ccu_latest (
+  appid              INT UNSIGNED  NOT NULL,
+  name               VARCHAR(512)  NOT NULL,
+  player_count       INT UNSIGNED  NOT NULL COMMENT '最新采集时刻的在线人数（人）',
+  player_count_prev  INT UNSIGNED           COMMENT '上一个采集时刻的在线人数（人）',
+  snapshot_at        DATETIME      NOT NULL COMMENT '最新采集时刻，UTC，全表相同',
+  PRIMARY KEY (appid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='实时在线榜（最新快照 Top 100）';
+
+CREATE TABLE IF NOT EXISTS ads_game_cluster (
+  appid             INT UNSIGNED      NOT NULL,
+  name              VARCHAR(512)      NOT NULL,
+  release_year      SMALLINT          NOT NULL,
+  price_bucket      VARCHAR(8)        NOT NULL,
+  cluster_id        TINYINT UNSIGNED  NOT NULL COMMENT '簇编号，从 0 开始',
+  cluster_label     VARCHAR(32)       NOT NULL COMMENT '簇的业务标签',
+  x                 FLOAT             NOT NULL COMMENT 'PCA 第一主成分',
+  y                 FLOAT             NOT NULL COMMENT 'PCA 第二主成分',
+  price_usd         DECIMAL(10,2)     NOT NULL,
+  positive_rate     DECIMAL(5,4)      NOT NULL COMMENT '好评率，0–1',
+  owners_mid        INT UNSIGNED      NOT NULL COMMENT '拥有者（份）',
+  avg_playtime_min  INT UNSIGNED      NOT NULL COMMENT '平均游玩时长（分钟）',
+  sample_key        INT UNSIGNED      NOT NULL COMMENT 'CRC32(appid)，散点抽样用',
+  PRIMARY KEY (appid),
+  KEY idx_year_bucket (release_year, price_bucket),
+  KEY idx_cluster (cluster_id),
+  KEY idx_sample_key (sample_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='游戏聚类结果（游戏粒度）';
+
+-- 1% 分箱：分箱计数可以相加，直方图和箱线图的五数都由它推出。
+CREATE TABLE IF NOT EXISTS ads_rating_dist (
+  release_year  SMALLINT          NOT NULL,
+  genre         VARCHAR(64)       NOT NULL COMMENT '类型名或 __ALL__',
+  price_bucket  VARCHAR(8)        NOT NULL,
+  rating_bin    TINYINT UNSIGNED  NOT NULL COMMENT '好评率分箱 0–99，100% 归入 99',
+  game_cnt      INT UNSIGNED      NOT NULL COMMENT '游戏数（款），只统计评论总数 >= 10 的游戏',
+  PRIMARY KEY (release_year, genre, price_bucket, rating_bin)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='好评率分布（1% 分箱）';
+
+CREATE TABLE IF NOT EXISTS ads_review_lang (
+  release_year  SMALLINT         NOT NULL COMMENT '所评游戏的发行年份',
+  genre         VARCHAR(64)      NOT NULL COMMENT '类型名或 __ALL__',
+  price_bucket  VARCHAR(8)       NOT NULL,
+  language      VARCHAR(32)      NOT NULL,
+  review_cnt    BIGINT UNSIGNED  NOT NULL COMMENT '评论数（条）',
+  positive_cnt  BIGINT UNSIGNED  NOT NULL COMMENT '其中 voted_up = 1 的评论数（条）',
+  PRIMARY KEY (release_year, genre, price_bucket, language)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='评论语言分布';
+
+CREATE TABLE IF NOT EXISTS ads_playtime_dist (
+  release_year  SMALLINT          NOT NULL COMMENT '所评游戏的发行年份',
+  genre         VARCHAR(64)       NOT NULL COMMENT '类型名或 __ALL__',
+  price_bucket  VARCHAR(8)        NOT NULL,
+  playtime_bin  TINYINT UNSIGNED  NOT NULL COMMENT '时长分箱 0–10，定义见 docs/schema.md',
+  review_cnt    BIGINT UNSIGNED   NOT NULL COMMENT '评论数（条）',
+  PRIMARY KEY (release_year, genre, price_bucket, playtime_bin)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='写评论时的游玩时长分布';
+
+CREATE TABLE IF NOT EXISTS ads_review_heatmap (
+  release_year  SMALLINT          NOT NULL COMMENT '所评游戏的发行年份',
+  genre         VARCHAR(64)       NOT NULL COMMENT '类型名或 __ALL__',
+  price_bucket  VARCHAR(8)        NOT NULL,
+  weekday       TINYINT UNSIGNED  NOT NULL COMMENT '0 = 周一 … 6 = 周日，UTC',
+  hour          TINYINT UNSIGNED  NOT NULL COMMENT '0–23，UTC',
+  review_cnt    BIGINT UNSIGNED   NOT NULL COMMENT '评论数（条）',
+  PRIMARY KEY (release_year, genre, price_bucket, weekday, hour)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='评论活跃时段（星期 × 小时）';
+
+-- 聚簇主键 (appid, month_start)：详情页按 appid 范围读取一款游戏的各月。
+CREATE TABLE IF NOT EXISTS ads_game_review_trend (
+  appid         INT UNSIGNED  NOT NULL,
+  month_start   DATE          NOT NULL COMMENT '评论发表月份的第一天，UTC',
+  review_cnt    INT UNSIGNED  NOT NULL COMMENT '该月评论数（条）',
+  positive_cnt  INT UNSIGNED  NOT NULL COMMENT '该月 voted_up = 1 的评论数（条）',
+  PRIMARY KEY (appid, month_start)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='单款游戏评论月度走势';
+
+CREATE TABLE IF NOT EXISTS ads_hot_pred (
+  appid       INT UNSIGNED  NOT NULL,
+  hot_prob    DECIMAL(5,4)  NOT NULL COMMENT '热销概率，0–1',
+  hot_pred    TINYINT(1)    NOT NULL COMMENT '预测标签，1 = 热销',
+  hot_actual  TINYINT(1)    NOT NULL COMMENT '实际标签，owners_mid 不低于第 90 百分位',
+  is_test     TINYINT(1)    NOT NULL COMMENT '1 = 在测试集里（训练时没见过）',
+  model_name  VARCHAR(32)   NOT NULL COMMENT '与 ads_model_metrics.model_name 一致',
+  PRIMARY KEY (appid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='热销预测结果';
+
+CREATE TABLE IF NOT EXISTS ads_model_metrics (
+  model_name    VARCHAR(32)  NOT NULL COMMENT '如 hot_rf / hot_lr / sentiment_lr / cluster_kmeans',
+  metric        VARCHAR(32)  NOT NULL COMMENT '如 accuracy / f1 / auc / silhouette',
+  metric_value  DOUBLE       NOT NULL,
+  updated_at    DATETIME     NOT NULL COMMENT 'UTC',
+  PRIMARY KEY (model_name, metric)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='模型评估指标（答辩展示）';
+
+CREATE TABLE IF NOT EXISTS ads_review_sentiment (
+  appid         INT UNSIGNED  NOT NULL,
+  sample_cnt    INT UNSIGNED  NOT NULL COMMENT '参与打分的评论条数',
+  positive_cnt  INT UNSIGNED  NOT NULL COMMENT '判为正向的条数，占比 = positive_cnt / sample_cnt',
+  method        VARCHAR(16)   NOT NULL COMMENT 'model = 情感模型；voted_up = 降级统计',
+  PRIMARY KEY (appid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='评论情感正向占比';
+
+-- 键值表：各脚本只写自己负责的键，不清空整表。
+CREATE TABLE IF NOT EXISTS ads_meta (
+  meta_key    VARCHAR(64)   NOT NULL COMMENT 'data_updated_at / ccu_updated_at / rows.<表名>',
+  meta_value  VARCHAR(255)  NOT NULL,
+  updated_at  DATETIME      NOT NULL COMMENT 'UTC',
+  PRIMARY KEY (meta_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='元信息：数据更新时间、各表行数';
