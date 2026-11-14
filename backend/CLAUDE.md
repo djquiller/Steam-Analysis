@@ -24,6 +24,7 @@ backend/tests/      pytest
 - SQL 一律参数化；`genre` 等字符串参数校验在 `/meta/filters` 的取值内，非法返回 `40001`。
 - 空结果返回 `code: 0` 与空数组；数据库异常捕获后返回 `50001` 并记录日志。
 - 开启 CORS，允许前端开发地址。
+- 字符集：连接串带 `?charset=utf8mb4`；FastAPI 默认以 UTF-8 输出 JSON。
 - 新增或修改接口：先改 `docs/api.md`（PR），再写代码与 pydantic 模型，Swagger 与文档保持一致。
 
 ## 实际代码结构
@@ -50,7 +51,7 @@ pytest 对每个接口覆盖三种情况：正常数据、空数据、非法参�
 
 ## 本地运行
 
-`.env`（仓库根目录那一份，后端直接读它）中 `DB_HOST` 指向本机样本库或本机全量主库（见根目录 `CLAUDE.md`"数据库与本机环境"）。在 `backend/` 目录下：
+`.env`（仓库根目录那一份，后端直接读它）中 `DB_HOST` 指向本机样本库或本机全量主库（见 `storage/CLAUDE.md`）。在 `backend/` 目录下：
 
 ```
 python -m uvicorn app.main:app --port 8000            # 启动

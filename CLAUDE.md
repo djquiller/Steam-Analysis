@@ -1,8 +1,8 @@
 # Steam 平台游戏玩家生态与热销趋势可视化系统
 
-课程综合项目（2 人组）。必须打通六环节流水线：**采集 → 存储 → 挖掘 → 后端 → 前端 → 可视化**，缺一个环节扣 8–10 分。课程要求已整理进下方"里程碑"与"评分细则速查"两节。
+课程综合项目（2 人组）。必须打通六环节流水线：**采集 → 存储 → 挖掘 → 后端 → 前端 → 可视化**，缺一个环节扣 8–10 分。
 
-本文件是项目的统一约定。各模块的实现细节写在对应子目录的 `CLAUDE.md` 里，在哪个模块工作就读哪份。
+本文件只写全局约定；各模块的实现细节、数据库与运行方式写在对应目录的 `CLAUDE.md` 里，在哪个模块工作就读哪份。
 
 ## 分工
 
@@ -11,16 +11,22 @@
 | **DJQuiller**（当前用户） | 开发 | 六个环节全部的编码、建库、数据导入与文档 |
 | **Mili** | Review | 审查所有 PR，批准后才能合并；不负责编码 |
 
-六个环节按两侧划分目录和契约。这只是模块划分，不对应不同的人，全部由 DJQuiller 开发：
-
-| 模块 | 环节 | 目录 | 契约 |
-|---|---|---|---|
-| **数据侧** | 采集、存储、挖掘 | `crawler/` `storage/` `analysis/` | `docs/schema.md` |
-| **可视化侧** | 后端 API、前端大屏 | `backend/` `frontend/` | `docs/api.md` |
-
-- **两侧之间的边界**：数据侧把 `dwd_*` 明细表、`ads_*` 聚合表和模型结果表写进 MySQL；后端只读这两层。即使同一个人写两边，这条边界也照样保留，答辩时作为分层设计来讲。
-- 分工表与 M2 / M4 文档要如实写明：编码由 DJQuiller 完成，Mili 负责 Review。
+- 分工表与 M2 / M4 文档如实写明：编码由 DJQuiller 完成，Mili 负责 Review。
 - 答辩时两人都要能讲清全链路；Mili 通过 Review 熟悉各模块的关键设计。
+
+## 目录与模块
+
+| 目录 | 内容 | 模块 |
+|---|---|---|
+| `crawler/` | 采集 | 数据侧 |
+| `storage/` | 建表、迁移、样本库；数据库账号与本机主库 | 数据侧 |
+| `analysis/` | 清洗、聚合、建模、数据质量报告 | 数据侧 |
+| `backend/` | FastAPI 服务 | 可视化侧 |
+| `frontend/` | Vue 大屏 | 可视化侧 |
+| `docs/` | 契约、数据来源、部署说明、M2 方案文档 | — |
+| `scripts/` | 一键初始化：`init_db.sql`、`load_data.py` | — |
+
+"数据侧 / 可视化侧"只是模块划分，不对应不同的人。两侧的边界在数据库：数据侧写 `ods`/`dwd`/`ads` 三层，后端只读 `dwd`/`ads`。
 
 ## 契约文件
 
@@ -42,59 +48,23 @@
 | 前端 | Vue 3 + Vite + TypeScript + ECharts 5 + Pinia + axios |
 | 环境 | Python 3.14（Anaconda 发行版；pandas 3.x、numpy 2.x、scikit-learn 1.9）、Node 20 LTS；Docker 选做 |
 
-## 仓库结构
-
-```
-crawler/     采集（数据侧）
-storage/     建表 SQL、migrations/、sample/（数据侧）
-analysis/    清洗、聚合、建模、数据质量报告（数据侧）
-backend/     FastAPI 服务（可视化侧）
-frontend/    Vue 大屏（可视化侧）
-docs/        schema.md、api.md、data-sources.md、部署说明、M2 方案文档
-scripts/     一键初始化：init_db.sql、load_data.py
-```
+Python 直接用本机 Anaconda（`C:\Users\Y7000P\anaconda3\python.exe`），不另建虚拟环境；缺的包按 `requirements.txt` 安装。
 
 ## 数据分层与规模
 
-- **`ods_*`**：原始数据，原样落库。
-- **`dwd_*`**：清洗后的明细。
-- **`ads_*`**：面向大屏的聚合结果表和模型结果表，基本一个看板模块对应一张表。
-
-需要大量计算的聚合都由数据侧脚本预先算好写入 `ads`。后端只对 `ads` 小表做按条件过滤、`SUM … GROUP BY` 再汇总、排序和分页。为此，响应筛选的 `ads` 表要保留"年份 / 类型 / 价格区间"三个维度列，具体见 `docs/schema.md`。
-
-**规模验收线**：
-- 游戏 ≥ 8 万条，评论 ≥ 100 万条，在线人数快照持续积累。
-- 附一份《数据质量报告》。
-- 答辩时两人都要能说清"海量"体现在哪里。
-
-## 数据库与本机环境
-
-全部开发、全量数据和答辩演示都在 DJQuiller 的电脑上完成：
-
-1. **主库**：本机 MySQL 8.4.11（Windows 服务 `MySQL84`，开机自启），地址 `127.0.0.1:3306`，不对局域网开放。`ods`、`dwd`、`ads` 三层都保留在本机。本机另装有 PostgreSQL 16，本项目不用。
-2. **账号分权**：
-   - `etl_writer`：采集与清洗、建模脚本使用，对三层都有读写权限。
-   - `api_reader`：后端使用，只对 `dwd`/`ads` 有 `SELECT` 权限。
-   - root 只在本机登录。
-3. **开发样本库**：`storage/sample/seed_sample.sql` 里每张 `dwd`/`ads` 表放几百到一千行真实子集，文件控制在几 MB 以内。Mili Review 时导入样本库即可在自己电脑上跑起来；用 `.env` 里的 `DB_HOST` 切换样本库和全量库。
-4. **改表流程**：在 PR 里同时修改 `docs/schema.md` 并附上 `storage/migrations/V{n}__描述.sql`。Mili Review 通过、合并之后，才在主库执行迁移，并同步更新样本数据。
-5. **答辩演示**：直接用本机跑全栈 + 本机全量库，不依赖网络，也不需要导出快照。
-6. **Python**：直接使用本机 Anaconda 的 Python 3.14.6（`C:\Users\Y7000P\anaconda3\python.exe`），不另建 3.11 环境。已自带 pandas 3.0.3、numpy 2.4.6、scikit-learn 1.9.0、pyarrow、SQLAlchemy 2.0、httpx、pydantic-settings、pytest、uvicorn；缺的包（pymysql、apscheduler、fastapi、kaggle 等）用到时按 `requirements.txt` 安装。
-7. **Kaggle**：令牌放在 `%USERPROFILE%\.kaggle\kaggle.json`，由 DJQuiller 本人放置；Claude 不读取其内容。
+- **`ods_*`** 原始数据原样落库；**`dwd_*`** 清洗后的明细；**`ads_*`** 面向大屏的聚合结果表和模型结果表，基本一个看板模块一张。
+- 重计算都由数据侧预先算好写入 `ads`，后端只做过滤、`SUM … GROUP BY` 再汇总、排序和分页。
+- **规模验收线**：游戏 ≥ 8 万条，评论 ≥ 100 万条，在线人数快照持续积累；附《数据质量报告》；答辩时两人都要能说清"海量"体现在哪里。
 
 ## 工程规范
 
-- **Git**：`main` 分支受保护；在 `feat/<模块>-<描述>` 分支上开发，通过 PR 合并，每个 PR 都由 Mili Review 批准后才能合并。有效提交 ≥ 12 次，"团队协作"这一项占 15%。
-- **提交信息**：用 Conventional Commits 格式，作用域写模块名，例如 `feat(crawler): 新增评论分页采集`、`fix(frontend): ...`。
-- **密钥**：Steam API Key 和数据库密码只写在 `.env`；仓库提交 `.env.example`，`.gitignore` 里要包含 `.env`。
+- **Git**：`main` 分支受保护；在 `feat/<模块>-<描述>` 分支上开发，每个 PR 都由 Mili Review 批准后才能合并。有效提交 ≥ 12 次，"团队协作"占 15%。
+- **提交信息**：Conventional Commits，作用域写模块名，例如 `feat(crawler): 新增评论分页采集`。
+- **密钥**：Steam API Key、数据库密码只写在 `.env`（已在 `.gitignore`）；仓库提交 `.env.example`。
 - **依赖声明**：Python 用 `requirements.txt`，前端用 `frontend/package.json`。
 - **可重跑初始化**：`scripts/init_db.sql` 加 `scripts/load_data.py`，克隆仓库、导入样本数据后就能跑起来。
 - **注释**：关键模块写清楚"做什么、为什么"。
-- **字符集**：全链路统一 UTF-8，换行统一 LF，由 `.editorconfig` 和 `.gitattributes` 约束；克隆仓库后执行 `git config core.quotepath false`，让中文文件名正常显示。
-  - 文件：UTF-8 无 BOM。Windows 上的 PowerShell 5 和记事本默认可能写出 GBK 或带 BOM 的文件，统一改用 VS Code 保存；PowerShell 7 默认 UTF-8 无 BOM。
-  - MySQL：库、表、连接一律使用 `utf8mb4` / `utf8mb4_0900_ai_ci`，不用只支持 3 字节的 `utf8`（`utf8mb3`），否则评论里的 emoji 和部分 CJK 字符会写入失败或变成乱码。SQLAlchemy / PyMySQL 连接串带 `?charset=utf8mb4`，`mysqldump` 导出、导入时也加 `--default-character-set=utf8mb4`。
-  - Python：`open()`、`pandas.read_csv()`、`to_csv()` 一律显式传 `encoding="utf-8"`，不依赖系统默认编码（中文 Windows 默认是 GBK）；需要给 Excel 打开的 CSV 才用 `utf-8-sig`。在 Windows 终端运行脚本时设置 `PYTHONUTF8=1`。
-  - 后端：FastAPI 默认以 UTF-8 输出 JSON；前端 `index.html` 写 `<meta charset="UTF-8">`。
+- **字符集**：全链路 UTF-8、换行 LF，由 `.editorconfig` 和 `.gitattributes` 约束；文件存为 UTF-8 无 BOM（用 VS Code 或 PowerShell 7，不用记事本 / PowerShell 5）；克隆后执行 `git config core.quotepath false`。Python 读写文件一律显式传 `encoding="utf-8"`（只有给 Excel 打开的 CSV 用 `utf-8-sig`），Windows 终端设 `PYTHONUTF8=1`。MySQL 与前后端的字符集细节见各自目录的 `CLAUDE.md`。
 
 ## 里程碑（当前：准备 M2）
 
