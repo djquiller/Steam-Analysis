@@ -1,6 +1,6 @@
 # 接口契约（API）
 
-> **维护方：可视化组**。本文件是后端接口的唯一权威来源；运行时以 FastAPI 自带 Swagger（`/docs`）为准，本文件随之同步。修改需 PR 并由数据组 Review。
+> **维护：DJQuiller；Review：Mili**。本文件是后端接口的唯一权威来源；运行时以 FastAPI 自带 Swagger（`/docs`）为准，本文件随之同步。修改需发 PR，经 Mili Review 后合并。
 >
 > 状态：**草案 v0.3**。每个接口 `data` 的结构已补全，字段与 `docs/schema.md` v0.3 的 `ads` 表一一对应。老师尚未下发"标准数据契约"，下发后逐字段对齐并更新本文件。
 >
