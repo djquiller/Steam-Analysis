@@ -32,13 +32,29 @@
 
 `ads_genre_heat` 本身就是按类型展示，不设 `__ALL__` 行。`dwd_game_genre` 建联合主键 `(appid, genre)` 和索引 `(genre, appid)`。
 
+## 库划分
+
+| 库 | 层 | 访问权限 |
+|---|---|---|
+| `steam_ods` | `ods_*` | 只有 `etl_writer` |
+| `steam` | `dwd_*`、`ads_*` | `etl_writer` 读写；`api_reader` 对整个库只有 `SELECT` |
+
+分成两个库，是因为 MySQL 不支持按表名前缀授权；分库后用库级授权，就能做到"后端只读 dwd/ads"，以后新增表也不用逐表补授权。建表语句在 `scripts/init_db.sql`，它是字段类型的权威来源，本文件只列关键字段。
+
+## ods 层（原始）
+
+| 表 | 来源 | 说明 |
+|---|---|---|
+| `ods_game_kaggle` | Kaggle 游戏集 `games.csv` | 40 列原样落库（列名转为 snake_case），PK `app_id` |
+| `ods_review_kaggle` | Kaggle 评论集 `reviews-*.parquet` | 只保留分析用字段，**不存评论原文和评论者 ID**；`src_shard` 记录来源分片，便于按分片重跑；PK `review_id` |
+
 ## dwd 层（明细）
 
 | 表 | 粒度 | 关键字段 |
 |---|---|---|
-| `dwd_game` | 一款游戏一行 | `appid` PK, `name`, `release_date`, `release_year`, `price_usd`, `price_bucket`, `owners_mid`, `positive`, `negative`, `avg_playtime_min`, `developer`, `publisher` TODO |
+| `dwd_game` | 一款游戏一行 | `appid` PK, `name`, `release_date`, `release_year`, `price_usd`, `price_bucket`, `owners_low`/`owners_high`/`owners_mid`, `peak_ccu`, `positive`, `negative`, `avg_playtime_min`, `median_playtime_min`, `developer`, `publisher`, `header_image`；热销预测用的发行前特征：`required_age`, `dlc_count`, `achievements`, `num_languages`, `on_windows`/`on_mac`/`on_linux`, `metacritic_score`。索引 `(release_year, price_bucket)` |
 | `dwd_game_genre` | 游戏 × 类型 | `appid`, `genre` |
-| `dwd_review` | 一条评论一行 | `review_id` PK, `appid`, `language`, `voted_up`, `playtime_at_review_min`, `timestamp_created` TODO |
+| `dwd_review` | 一条评论一行 | PK `(appid, review_id)`，聚簇主键让同一游戏的评论物理相邻；`language`, `voted_up`, `playtime_at_review_min`, `timestamp_created`（UTC） |
 | `dwd_ccu_snapshot` | 游戏 × 采集时刻 | `appid`, `snapshot_at`, `player_count` |
 | `dwd_price_history` | 游戏 × 采集日期 | `appid`, `snapshot_date`, `price_usd`（详情页价格历史；仅增量采集后有数据） |
 

@@ -1,0 +1,31 @@
+# Python 依赖（开发环境：Anaconda Python 3.14）
+# 下限为本机验证过的版本；安装：python -m pip install -r requirements.txt
+
+# --- 数据处理与建模（analysis/） ---
+pandas>=3.0
+numpy>=2.4
+pyarrow>=23.0          # 读取 Kaggle 评论集的 Parquet 分片
+scikit-learn>=1.9
+
+# --- 数据库 ---
+SQLAlchemy>=2.0
+PyMySQL>=1.1
+cryptography>=41       # PyMySQL 连接 MySQL 8 默认的 caching_sha2_password 认证需要
+
+# --- 采集（crawler/） ---
+httpx>=0.28
+requests>=2.32
+APScheduler>=3.10,<4   # 4.x 的 API 不兼容
+kaggle>=2.0            # 下载 Kaggle 数据集
+six                    # kaggle 2.2.5 漏声明的依赖
+
+# --- 配置 ---
+python-dotenv>=1.0
+pydantic-settings>=2.0
+
+# --- 后端（backend/） ---
+fastapi>=0.115
+uvicorn>=0.30
+
+# --- 测试 ---
+pytest>=8.0
