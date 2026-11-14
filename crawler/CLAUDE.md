@@ -1,4 +1,4 @@
-# crawler/ — 采集（数据组）
+# crawler/ — 采集（数据侧）
 
 把数据从外部来源落到 MySQL `ods_*` 层。表结构以 `docs/schema.md` 为准；每个新数据源登记到 `docs/data-sources.md`（名称、链接、许可、下载/采集日期、行数）。
 
@@ -26,7 +26,7 @@
 
 `GetNumberOfCurrentPlayers` 与价格快照由 APScheduler 常驻进程执行，体现"定时增量采集"加分项。部署说明里写清启动方式；答辩前确认快照已连续积累数天。
 
-## 待补（数据组填写）
+## 待补
 
 - [ ] 选定的 Kaggle 数据集及其字段映射
 - [ ] 各脚本入口与运行命令

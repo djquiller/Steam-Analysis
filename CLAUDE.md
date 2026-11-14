@@ -11,20 +11,20 @@
 | **DJQuiller**（当前用户） | 开发 | 六个环节全部的编码、建库、数据导入与文档 |
 | **Mili** | Review | 审查所有 PR，批准后才能合并；不负责编码 |
 
-六个环节仍按两个模块组划分目录，各子目录 `CLAUDE.md` 里的"数据组 / 可视化组"指的是模块组，不再对应不同的人：
+六个环节按两侧划分目录和契约。这只是模块划分，不对应不同的人，全部由 DJQuiller 开发：
 
-| 模块组 | 环节 | 目录 | 契约 |
+| 模块 | 环节 | 目录 | 契约 |
 |---|---|---|---|
-| **数据组** | 采集、存储、挖掘 | `crawler/` `storage/` `analysis/` | `docs/schema.md` |
-| **可视化组** | 后端 API、前端大屏 | `backend/` `frontend/` | `docs/api.md` |
+| **数据侧** | 采集、存储、挖掘 | `crawler/` `storage/` `analysis/` | `docs/schema.md` |
+| **可视化侧** | 后端 API、前端大屏 | `backend/` `frontend/` | `docs/api.md` |
 
-- **模块组之间的边界**：数据侧把 `dwd_*` 明细表、`ads_*` 聚合表和模型结果表写进 MySQL；后端只读这两层。即使同一个人写两边，这条边界也照样保留，答辩时作为分层设计来讲。
+- **两侧之间的边界**：数据侧把 `dwd_*` 明细表、`ads_*` 聚合表和模型结果表写进 MySQL；后端只读这两层。即使同一个人写两边，这条边界也照样保留，答辩时作为分层设计来讲。
 - 分工表与 M2 / M4 文档要如实写明：编码由 DJQuiller 完成，Mili 负责 Review。
 - 答辩时两人都要能讲清全链路；Mili 通过 Review 熟悉各模块的关键设计。
 
 ## 契约文件
 
-两个模块组之间的约定只记录在下面两份文件里，各处的 CLAUDE.md 只引用它们，不另抄一份：
+两侧之间的约定只记录在下面两份文件里，各处的 CLAUDE.md 只引用它们，不另抄一份：
 
 - **`docs/schema.md`**：所有表的表名、字段、类型、口径，以及每张 `ads_*` 表对应哪个接口。
 - **`docs/api.md`**：返回格式、错误码、全局筛选参数、接口清单。
@@ -45,11 +45,11 @@
 ## 仓库结构
 
 ```
-crawler/     采集（数据组）
-storage/     建表 SQL、migrations/、sample/（数据组）
-analysis/    清洗、聚合、建模、数据质量报告（数据组）
-backend/     FastAPI 服务（可视化组）
-frontend/    Vue 大屏（可视化组）
+crawler/     采集（数据侧）
+storage/     建表 SQL、migrations/、sample/（数据侧）
+analysis/    清洗、聚合、建模、数据质量报告（数据侧）
+backend/     FastAPI 服务（可视化侧）
+frontend/    Vue 大屏（可视化侧）
 docs/        schema.md、api.md、data-sources.md、部署说明、M2 方案文档
 scripts/     一键初始化：init_db.sql、load_data.py
 ```
@@ -60,7 +60,7 @@ scripts/     一键初始化：init_db.sql、load_data.py
 - **`dwd_*`**：清洗后的明细。
 - **`ads_*`**：面向大屏的聚合结果表和模型结果表，基本一个看板模块对应一张表。
 
-需要大量计算的聚合都由数据组预先算好写入 `ads`。后端只对 `ads` 小表做按条件过滤、`SUM … GROUP BY` 再汇总、排序和分页。为此，响应筛选的 `ads` 表要保留"年份 / 类型 / 价格区间"三个维度列，具体见 `docs/schema.md`。
+需要大量计算的聚合都由数据侧脚本预先算好写入 `ads`。后端只对 `ads` 小表做按条件过滤、`SUM … GROUP BY` 再汇总、排序和分页。为此，响应筛选的 `ads` 表要保留"年份 / 类型 / 价格区间"三个维度列，具体见 `docs/schema.md`。
 
 **规模验收线**：
 - 游戏 ≥ 8 万条，评论 ≥ 100 万条，在线人数快照持续积累。
