@@ -19,6 +19,9 @@ data/
 *.sql.gz
 !storage/sample/**
 
+# Claude Code 会话的临时 worktree
+.claude/worktrees/
+
 # 编辑器 / 系统
 .vscode/
 .idea/
