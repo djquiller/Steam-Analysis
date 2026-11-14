@@ -1,8 +1,8 @@
 # 数据表契约（schema）
 
-> **维护方：数据组**。本文件是全部表结构的唯一权威来源。修改流程：PR 中同时提交 `storage/migrations/V{n}__描述.sql`，由可视化组 Review 后合并，合并后才在主库执行迁移并更新 `storage/sample/`。
+> **维护：DJQuiller；Review：Mili**。本文件是全部表结构的唯一权威来源。修改流程：PR 中同时提交 `storage/migrations/V{n}__描述.sql`，经 Mili Review 后合并，合并后才在主库执行迁移并更新 `storage/sample/`。
 >
-> 状态：**草案**。表名与粒度已与可视化组对齐；字段类型与完整字段待数据组补全（标 `TODO` 处）。
+> 状态：**草案**。表名与粒度已与接口契约对齐；字段类型与完整字段待补全（标 `TODO` 处）。
 
 ## 全局口径
 
@@ -19,7 +19,7 @@
 
 ## 筛选维度约定
 
-可视化组的全局筛选为 **年份 / 类型 / 价格区间**。凡需响应筛选的 `ads_*` 表，必须保留 `release_year`、`genre`、`price_bucket` 三列作为聚合粒度，后端用 `WHERE` 过滤后再 `SUM … GROUP BY` 小表汇总。不响应筛选的表在下方标注"全局"。
+大屏的全局筛选为 **年份 / 类型 / 价格区间**。凡需响应筛选的 `ads_*` 表，必须保留 `release_year`、`genre`、`price_bucket` 三列作为聚合粒度，后端用 `WHERE` 过滤后再 `SUM … GROUP BY` 小表汇总。不响应筛选的表在下方标注"全局"。
 
 ## dwd 层（明细）
 

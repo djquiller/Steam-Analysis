@@ -1,6 +1,5 @@
-# 密钥与个人配置
+# 密钥
 .env
-CLAUDE.local.md
 
 # Python
 __pycache__/
@@ -19,6 +18,9 @@ data/
 *.parquet
 *.sql.gz
 !storage/sample/**
+
+# Claude Code 会话的临时 worktree
+.claude/worktrees/
 
 # 编辑器 / 系统
 .vscode/

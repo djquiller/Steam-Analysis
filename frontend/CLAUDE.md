@@ -1,4 +1,4 @@
-# frontend/ — Vue 大屏（可视化组）
+# frontend/ — Vue 大屏（可视化侧）
 
 数据只从后端 API 取，接口与返回结构以 `docs/api.md` 为准；字段口径（单位、估算方式）见 `docs/schema.md`，图表上的单位与口径说明从那里取。
 
@@ -52,6 +52,8 @@
 ECharts 主题在 `src/theme/steam-dark.ts` 中 `registerTheme`，CSS 变量在 `src/theme/tokens.css`。
 
 ## 目录约定
+
+`index.html` 写 `<meta charset="UTF-8">`。
 
 ```
 src/
