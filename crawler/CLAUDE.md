@@ -21,6 +21,7 @@
 - 原始响应原样写 `ods`，清洗留给 `analysis/`。
 - 每次运行打印并记录：来源、起止时间、请求数、失败数、入库行数——这些数字进入《数据质量报告》和答辩 PPT 的"数据来源与规模"页。
 - Steam API Key 与数据库连接（`etl_writer` 账号）只从 `.env` 读取。
+- Kaggle 令牌放在 `%USERPROFILE%\.kaggle\kaggle.json`，由 DJQuiller 本人放置；Claude 不读取其内容。
 
 ## 定时任务
 

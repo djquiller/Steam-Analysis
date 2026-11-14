@@ -53,6 +53,8 @@ ECharts 主题在 `src/theme/steam-dark.ts` 中 `registerTheme`，CSS 变量在 
 
 ## 目录约定
 
+`index.html` 写 `<meta charset="UTF-8">`。
+
 ```
 src/
   api/              axios 实例（解包 {code,msg,data}，code ≠ 0 抛错）+ 按 docs/api.md 分组的请求函数
